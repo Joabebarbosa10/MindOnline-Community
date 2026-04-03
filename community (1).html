@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MindOnline Community</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ════════════════════════════════════════
+   TOKENS
+════════════════════════════════════════ */
+:root {
+  --bg:     #000000;
+  --bg2:    #0d0d0d;
+  --bg3:    #161616;
+  --bg4:    #1e1e1e;
+  --border: rgba(255,255,255,.10);
+  --gold:   #f5c842;
+  --gold2:  #ffd96a;
+  --golddim:rgba(245,200,66,.12);
+  --white:  #e7e9ea;
+  --muted:  #6b7280;
+  --muted2: #374151;
+  --red:    #f4212e;
+  --blue:   #1d9bf0;
+  --green:  #00ba7c;
+  --title:  'Syne', sans-serif;
+  --body:   'DM Sans', sans-serif;
+  --ls-w: 275px;
+  --rs-w: 350px;
+  --feed-max: 600px;
+}
+
+/* ════════════════════════════════════════
+   RESET & BASE
+════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+a { text-decoration:none; color:inherit; }
+button { cursor:pointer; font-family:var(--body); }
+input, textarea { font-family:var(--body); }
+
+/* ════════════════════════════════════════
+   AUTH PAGE
+════════════════════════════════════════ */
+#authPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 24px;
+}
+.auth-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 1000px;
+}
+.auth-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+}
+.auth-logo-giant {
+  font-family: var(--title);
+  font-size: 80px;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: -4px;
+  line-height: 1;
+}
+.auth-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 48px;
+}
+.auth-headline {
+  font-family: var(--title);
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin-bottom: 40px;
+}
+.auth-headline em { color: var(--gold); font-style: italic; }
+.auth-card { width: 100%; max-width: 380px; }
+.continue-btn {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 12px 16px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 9999px; cursor: pointer; transition: all .2s;
+  margin-bottom: 16px; text-align: left; color: var(--white);
+}
+.continue-btn:hover { border-color: var(--gold); }
+.continue-av {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--golddim); color: var(--gold);
+  font-family: var(--title); font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.continue-info { flex:1; }
+.continue-name { font-size: 14px; font-weight: 600; }
+.continue-em { font-size: 12px; color: var(--muted); }
+
+.auth-sep {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--muted); font-size: 13px; margin: 14px 0;
+}
+.auth-sep::before,.auth-sep::after {
+  content:''; flex:1; height:1px; background: var(--border);
+}
+.google-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 11px 16px;
+  background: var(--white); color: #000;
+  border: none; border-radius: 9999px;
+  font-size: 14px; font-weight: 700;
+  transition: all .2s; margin-bottom: 10px;
+}
+.google-btn:hover { background: #e2e2e2; }
+.tabs-row {
+  display: flex; gap: 2px;
+  background: rgba(255,255,255,.05);
+  border-radius: 12px; padding: 4px; margin-bottom: 20px;
+}
+.tab-pill {
+  flex:1; padding: 9px; border:none; background:none;
+  color: var(--muted); border-radius: 9px;
+  font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s;
+  font-family: var(--body);
+}
+.tab-pill.active { background: var(--bg); color: var(--white); box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.field label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing:.8px; }
+.field input, .field textarea {
+  background: rgba(255,255,255,.05); border: 1px solid var(--border);
+  color: var(--white); font-size: 15px; padding: 11px 14px;
+  outline: none; border-radius: 8px; width: 100%;
+  transition: border-color .2s;
+}
+.field input:focus, .field textarea:focus { border-color: var(--gold); }
+.field input::placeholder, .field textarea::placeholder { color: var(--muted2); }
+.btn-primary {
+  width: 100%; background: var(--gold); color: #000;
+  border: none; font-size: 15px; font-weight: 700;
+  padding: 12px; cursor: pointer; border-radius: 9999px;
+  transition: all .2s; margin-top: 4px; letter-spacing:.2px;
+}
+.btn-primary:hover { background: var(--gold2); }
+.auth-switch { text-align:center; margin-top: 14px; font-size: 13px; color: var(--muted); }
+.auth-switch a { color: var(--gold); cursor: pointer; font-weight: 500; }
+.auth-forgot { font-size: 12px; color: var(--muted); text-align:right; margin-bottom: 10px; margin-top:-4px; cursor:pointer; text-decoration:underline; }
+
+/* ════════════════════════════════════════
+   APP LAYOUT — Twitter 3-column
+════════════════════════════════════════ */
+#appWrap {
+  display: grid;
+  grid-template-columns: var(--ls-w) var(--feed-max) 1fr;
+  min-height: 100vh;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ── LEFT SIDEBAR ── */
+.left-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 0 12px 20px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+.left-sidebar::-webkit-scrollbar { display:none; }
+
+.ls-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--title); font-size: 22px; font-weight: 800;
+  padding: 16px 12px; margin-bottom: 4px;
+  color: var(--white); text-decoration: none;
+}
+.ls-logo-dot {
+  width: 10px; height: 10px; background: var(--gold);
+  border-radius: 50%; box-shadow: 0 0 10px var(--gold);
+  animation: pulse 2s ease-in-out infinite; flex-shrink:0;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(1.4);} }
+
+.nav-item {
+  display: flex; align-items: center; gap: 18px;
+  padding: 12px 14px; border-radius: 9999px;
+  font-size: 18px; font-weight: 400; color: var(--white);
+  cursor: pointer; transition: all .2s; background: none; border: none;
+  width: 100%; text-align: left; position: relative;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: rgba(255,255,255,.06); }
+.nav-item.active { font-weight: 700; }
+.nav-item.active .nav-icon { color: var(--gold); }
+.nav-icon { font-size: 22px; width: 24px; text-align:center; flex-shrink:0; }
+.nav-label { font-size: 18px; }
+.nav-badge {
+  position: absolute; top: 8px; left: 30px;
+  width: 8px; height: 8px; background: var(--red);
+  border-radius: 50%; border: 2px solid var(--bg); display:none;
+}
+.nav-badge.show { display:block; }
+.nav-admin { color: var(--red) !important; }
+
+.ls-compose-btn {
+  width: 100%; padding: 14px; margin-top: 8px;
+  background: var(--gold); color: #000;
+  border: none; border-radius: 9999px;
+  font-size: 16px; font-weight: 700; cursor: pointer;
+  transition: all .2s;
+}
+.ls-compose-btn:hover { background: var(--gold2); }
+
+.ls-profile-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 9999px; margin-top: auto;
+  cursor: pointer; transition: background .2s; border:none;
+  background: none; color: var(--white); width: 100%; text-align:left;
+}
+.ls-profile-btn:hover { background: rgba(255,255,255,.06); }
+.ls-profile-info { flex:1; min-width:0; }
+.ls-profile-name { font-size: 14px; font-weight: 700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ls-profile-handle { font-size: 13px; color: var(--muted); }
+.ls-profile-dots { font-size: 16px; color: var(--muted); }
+
+/* ── MAIN FEED ── */
+.main-feed {
+  border-right: 1px solid var(--border);
+  min-height: 100vh;
+}
+
+/* Feed header (sticky) */
+.feed-header {
+  position: sticky; top:0; z-index: 10;
+  background: rgba(0,0,0,.85); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.feed-header-title {
+  padding: 16px 20px;
+  font-family: var(--title); font-size: 18px; font-weight: 800;
+}
+.feed-tabs-bar {
+  display: flex; border-bottom: 1px solid var(--border);
+}
+.ftab {
+  flex:1; padding: 16px; background:none; border:none;
+  color: var(--muted); font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all .2s; position: relative;
+  font-family: var(--body);
+}
+.ftab:hover { background: rgba(255,255,255,.04); color: var(--white); }
+.ftab.active { color: var(--white); font-weight: 700; }
+.ftab.active::after {
+  content: ''; position:absolute; bottom:0; left:50%;
+  transform: translateX(-50%); width: 48px; height: 3px;
+  background: var(--gold); border-radius: 999px;
+}
+
+/* Compose box in feed */
+.compose-box {
+  display: flex; gap: 12px; padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.compose-right { flex:1; }
+.compose-ta {
+  width: 100%; background: none; border: none; outline: none;
+  color: var(--white); font-size: 18px; resize: none;
+  min-height: 80px; line-height: 1.4; padding-top: 4px;
+  font-family: var(--body);
+}
+.compose-ta::placeholder { color: var(--muted); }
+.compose-actions {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 12px; border-top: 1px solid var(--border); margin-top: 8px;
+}
+.compose-tools { display:flex; gap:2px; }
+.tool-btn {
+  width: 36px; height: 36px; border-radius: 50%; border:none;
+  background: transparent; color: var(--gold); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s; font-size:16px;
+}
+.tool-btn:hover { background: var(--golddim); }
+.compose-right-actions { display:flex; align-items:center; gap:12px; }
+.char-ring {
+  font-size: 12px; color: var(--muted);
+  padding: 3px 8px; border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.btn-post {
+  background: var(--gold); color: #000;
+  border: none; font-size: 14px; font-weight: 700;
+  padding: 8px 18px; border-radius: 9999px; cursor: pointer;
+  transition: all .2s; font-family: var(--body);
+}
+.btn-post:hover { background: var(--gold2); }
+.img-prev-wrap { margin-top: 10px; position:relative; display:inline-block; }
+.img-prev-wrap img { max-height: 160px; border-radius: 14px; border: 1px solid var(--border); }
+.img-prev-rm {
+  position:absolute; top:6px; right:6px; background:rgba(0,0,0,.8);
+  border:none; color:#fff; border-radius:50%; width:24px; height:24px;
+  cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center;
+}
+
+/* Posts */
+.post-card {
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px; cursor: pointer;
+  transition: background .15s;
+  display: flex; gap: 12px;
+}
+.post-card:hover { background: rgba(255,255,255,.02); }
+.post-left { flex-shrink: 0; }
+.post-right { flex:1; min-width:0; }
+.post-header { display:flex; align-items:center; gap:6px; margin-bottom:4px; flex-wrap:wrap; }
+.post-author-name { font-size: 14px; font-weight: 700; cursor:pointer; }
+.post-author-name:hover { text-decoration:underline; }
+.post-handle-time { font-size: 13px; color: var(--muted); }
+.post-body-text { font-size: 15px; line-height: 1.6; color: var(--white); white-space:pre-wrap; word-break:break-word; margin-bottom: 10px; }
+.post-img { width:100%; border-radius:14px; margin-top:8px; border:1px solid var(--border); max-height:400px; object-fit:cover; display:block; }
+.post-actions { display:flex; gap:0; margin-top:10px; }
+.act-btn {
+  display:flex; align-items:center; gap:6px; font-size:13px;
+  color: var(--muted); cursor:pointer; border-radius:9999px;
+  padding:7px 12px; transition:all .15s; border:none; background:none;
+  font-family: var(--body); flex:1; max-width:80px;
+}
+.act-btn:hover { color: var(--gold); background: var(--golddim); }
+.act-btn.liked { color: var(--red); }
+.act-btn.liked:hover { background: rgba(244,33,46,.1); }
+.act-btn svg { width:17px; height:17px; }
+.pinned-flag {
+  display:flex; align-items:center; gap:4px;
+  font-size:11px; color:var(--muted); margin-bottom:8px;
+}
+.del-btn {
+  margin-left:auto; background:none; border:none; color:var(--muted);
+  cursor:pointer; font-size:12px; padding:4px 8px; border-radius:6px;
+  transition:all .15s;
+}
+.del-btn:hover { color:var(--red); background:rgba(244,33,46,.1); }
+
+/* Avatar */
+.av {
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:var(--title); font-weight:700; flex-shrink:0;
+}
+.av-40 { width:40px; height:40px; font-size:13px; }
+.av-34 { width:34px; height:34px; font-size:11px; }
+.av-48 { width:48px; height:48px; font-size:15px; }
+.av-72 { width:72px; height:72px; font-size:22px; }
+
+/* Badges */
+.badge-v { color:var(--gold); font-size:13px; }
+.badge-admin {
+  background:rgba(244,33,46,.15); color:var(--red);
+  font-size:10px; font-weight:700; padding:2px 8px;
+  border-radius:999px; border:1px solid rgba(244,33,46,.2);
+}
+
+/* Misc */
+.spinner {
+  width:28px; height:28px; border:2px solid var(--border);
+  border-top-color:var(--gold); border-radius:50%;
+  animation:spin .7s linear infinite; margin:40px auto;
+}
+@keyframes spin { to{transform:rotate(360deg);} }
+.empty {
+  padding:48px 24px; text-align:center; color:var(--muted);
+  font-size:14px; line-height:1.9;
+}
+.empty-icon { font-size:40px; margin-bottom:12px; }
+
+/* ── RIGHT SIDEBAR ── */
+.right-sidebar {
+  padding: 0 20px 20px;
+  position: sticky; top:0; height:100vh; overflow-y:auto;
+}
+.right-sidebar::-webkit-scrollbar { display:none; }
+
+.search-bar {
+  position: sticky; top:0;
+  background: var(--bg); padding: 12px 0;
+  z-index: 5; margin-bottom: 4px;
+}
+.search-input-wrap { position:relative; }
+.search-input {
+  width: 100%; padding: 10px 18px 10px 42px;
+  background: var(--bg3); border: 1px solid transparent;
+  border-radius: 9999px; color: var(--white);
+  font-size: 14px; outline:none; transition:all .2s;
+  font-family: var(--body);
+}
+.search-input:focus { border-color:var(--gold); background:rgba(245,200,66,.03); }
+.search-input::placeholder { color:var(--muted); }
+.search-icon {
+  position:absolute; left:14px; top:50%; transform:translateY(-50%);
+  color:var(--muted); font-size:15px; pointer-events:none;
+}
+.search-dropdown {
+  position:absolute; top:calc(100%+6px); left:0; right:0;
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden; display:none; z-index:100;
+  box-shadow:0 20px 60px rgba(0,0,0,.8);
+}
+.search-dropdown.open { display:block; }
+.search-result-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px; cursor:pointer; transition:background .15s;
+}
+.search-result-item:hover { background:rgba(255,255,255,.04); }
+
+.widget {
+  background: var(--bg3); border-radius:16px;
+  overflow:hidden; margin-bottom:16px;
+}
+.widget-head {
+  font-family:var(--title); font-size:18px; font-weight:800;
+  padding:14px 16px 10px;
+}
+.trend-row {
+  padding:10px 16px; cursor:pointer; transition:background .15s;
+}
+.trend-row:hover { background:rgba(255,255,255,.04); }
+.trend-cat { font-size:12px; color:var(--muted); margin-bottom:2px; }
+.trend-tag { font-size:14px; font-weight:700; }
+.trend-cnt { font-size:12px; color:var(--muted); margin-top:2px; }
+.person-row {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 16px; cursor:pointer; transition:background .15s;
+}
+.person-row:hover { background:rgba(255,255,255,.04); }
+.person-info { flex:1; min-width:0; }
+.person-name { font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.person-handle { font-size:13px; color:var(--muted); }
+.btn-follow-sm {
+  background:var(--white); color:#000;
+  border:none; font-size:13px; font-weight:700;
+  padding:6px 14px; border-radius:9999px; cursor:pointer;
+  transition:all .2s; flex-shrink:0;
+}
+.btn-follow-sm:hover { background:#e2e2e2; }
+.btn-follow-sm.following {
+  background:transparent; color:var(--white);
+  border:1px solid var(--border);
+}
+.btn-follow-sm.following:hover { border-color:var(--red); color:var(--red); }
+.widget-more {
+  padding:12px 16px; font-size:14px; color:var(--blue);
+  cursor:pointer; display:block; border:none; background:none; width:100%; text-align:left;
+}
+.widget-more:hover { background:rgba(255,255,255,.04); }
+
+/* ── INNER PAGES (notif, seguindo) ── */
+.inner-page { max-width: var(--feed-max); }
+.page-header {
+  display:flex; align-items:center; gap:16px;
+  padding:14px 20px; border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:10;
+  background:rgba(0,0,0,.85); backdrop-filter:blur(12px);
+}
+.page-back-btn {
+  width:34px; height:34px; border-radius:50%; border:none;
+  background:none; color:var(--white); cursor:pointer; font-size:18px;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+.page-back-btn:hover { background:rgba(255,255,255,.08); }
+.page-title { font-family:var(--title); font-size:18px; font-weight:800; }
+.page-subtitle { font-size:13px; color:var(--muted); }
+
+.notif-card {
+  display:flex; gap:12px; padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer; transition:background .15s;
+}
+.notif-card:hover { background:rgba(255,255,255,.03); }
+.notif-card.unread { background:rgba(245,200,66,.03); }
+.notif-icon {
+  width:40px; height:40px; border-radius:50%;
+  background:var(--golddim); display:flex; align-items:center;
+  justify-content:center; font-size:18px; flex-shrink:0;
+}
+.notif-text { font-size:14px; line-height:1.5; }
+.notif-time { font-size:12px; color:var(--muted); margin-top:3px; }
+
+.follow-card {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 20px; border-bottom:1px solid var(--border);
+  cursor:pointer; transition:background .15s;
+}
+.follow-card:hover { background:rgba(255,255,255,.03); }
+
+/* ── PROFILE PAGE ── */
+.profile-banner {
+  height:180px;
+  background:linear-gradient(135deg,rgba(245,200,66,.2),rgba(79,142,247,.15),rgba(244,33,46,.1));
+}
+.profile-header {
+  padding: 0 20px 16px; border-bottom:1px solid var(--border);
+}
+.profile-actions { display:flex; justify-content:flex-end; padding:12px 0; gap:8px; }
+.btn-edit-profile {
+  background:transparent; color:var(--white);
+  border:1px solid var(--border); font-size:14px; font-weight:700;
+  padding:7px 18px; border-radius:9999px; cursor:pointer; transition:all .2s;
+}
+.btn-edit-profile:hover { background:rgba(255,255,255,.06); }
+.btn-follow-profile {
+  background:var(--white); color:#000;
+  border:none; font-size:14px; font-weight:700;
+  padding:7px 18px; border-radius:9999px; cursor:pointer; transition:all .2s;
+}
+.btn-follow-profile:hover { background:#e2e2e2; }
+.btn-follow-profile.following {
+  background:transparent; color:var(--white); border:1px solid var(--border);
+}
+.btn-follow-profile.following:hover { border-color:var(--red); color:var(--red); }
+.profile-name { font-family:var(--title); font-size:20px; font-weight:800; display:flex; align-items:center; gap:6px; }
+.profile-handle { font-size:14px; color:var(--muted); margin-top:2px; }
+.profile-bio { font-size:15px; color:var(--white); line-height:1.6; margin:10px 0; }
+.profile-stats { display:flex; gap:24px; margin-top:12px; }
+.p-stat { display:flex; gap:4px; cursor:pointer; }
+.p-stat:hover span:first-child { text-decoration:underline; }
+.p-stat-num { font-size:14px; font-weight:700; }
+.p-stat-lbl { font-size:14px; color:var(--muted); }
+
+/* ── ADMIN PAGE ── */
+.admin-wrap {
+  max-width: 900px; padding: 0 20px 60px;
+}
+.admin-header {
+  padding: 16px 0; border-bottom: 1px solid var(--border);
+  margin-bottom: 20px; display:flex; align-items:center; gap:10px;
+}
+.admin-title {
+  font-family:var(--title); font-size:20px; font-weight:800; color:var(--red);
+}
+.admin-stats-grid {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px;
+}
+.admin-stat-card {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:16px; padding:16px;
+}
+.admin-stat-n { font-family:var(--title); font-size:28px; font-weight:800; }
+.admin-stat-l { font-size:12px; color:var(--muted); margin-top:4px; }
+.admin-card {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden; margin-bottom:16px;
+}
+.admin-card-title {
+  font-family:var(--title); font-size:15px; font-weight:700;
+  padding:14px 16px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
+}
+.tbl { width:100%; border-collapse:collapse; font-size:13px; }
+.tbl th {
+  text-align:left; padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  color:var(--muted); font-weight:500; font-size:11px;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.tbl td { padding:10px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl-overflow { overflow-x:auto; }
+.btn-sm {
+  background:var(--golddim); color:var(--gold);
+  border:1px solid rgba(245,200,66,.2); border-radius:6px;
+  padding:4px 10px; font-size:11px; font-weight:600;
+  cursor:pointer; font-family:var(--body); transition:all .2s; margin:2px;
+}
+.btn-sm:hover { background:var(--gold); color:#000; }
+.btn-danger {
+  background:rgba(244,33,46,.1); color:var(--red);
+  border:1px solid rgba(244,33,46,.2); border-radius:6px;
+  padding:4px 10px; font-size:11px; font-weight:600;
+  cursor:pointer; font-family:var(--body); transition:all .2s; margin:2px;
+}
+.btn-danger:hover { background:var(--red); color:#fff; }
+
+/* ── MODALS ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.6); z-index:500;
+  align-items:center; justify-content:center;
+  padding:20px; backdrop-filter:blur(4px);
+}
+.modal-overlay.open { display:flex; }
+.modal-box {
+  background:var(--bg2); border:1px solid var(--border);
+  width:100%; max-width:560px; max-height:88vh;
+  overflow-y:auto; border-radius:20px;
+  display:flex; flex-direction:column;
+  box-shadow:0 40px 100px rgba(0,0,0,.9);
+}
+.modal-hdr {
+  display:flex; align-items:center; gap:14px;
+  padding:16px 20px; border-bottom:1px solid var(--border);
+  position:sticky; top:0; background:var(--bg2); z-index:1;
+  border-radius:20px 20px 0 0;
+}
+.modal-close {
+  width:32px; height:32px; border-radius:50%; border:none;
+  background:rgba(255,255,255,.07); color:var(--white);
+  font-size:15px; cursor:pointer; display:flex;
+  align-items:center; justify-content:center; transition:background .15s;
+}
+.modal-close:hover { background:rgba(255,255,255,.14); }
+.modal-ttl { font-family:var(--title); font-size:17px; font-weight:700; }
+.comment-item { display:flex; gap:10px; padding:12px 20px; border-bottom:1px solid var(--border); }
+.comment-body { flex:1; }
+.comment-author { font-size:13px; font-weight:700; cursor:pointer; }
+.comment-author:hover { text-decoration:underline; }
+.comment-txt { font-size:14px; color:#bbb; line-height:1.5; margin-top:3px; }
+.modal-input-row {
+  display:flex; gap:10px; align-items:center;
+  padding:14px 20px; border-top:1px solid var(--border);
+  position:sticky; bottom:0; background:var(--bg2);
+}
+.modal-input-row input {
+  flex:1; background:rgba(255,255,255,.05); border:1px solid var(--border);
+  border-radius:9999px; padding:9px 16px; outline:none;
+  font-size:14px; color:var(--white); transition:border-color .2s;
+  font-family:var(--body);
+}
+.modal-input-row input:focus { border-color:var(--gold); }
+.modal-input-row input::placeholder { color:var(--muted); }
+
+.share-options { padding:16px; display:flex; flex-direction:column; gap:8px; }
+.share-btn {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; border-radius:12px;
+  border:1px solid var(--border); background:rgba(255,255,255,.03);
+  cursor:pointer; font-size:14px; font-weight:500; color:var(--white);
+  transition:all .2s; width:100%; text-align:left;
+}
+.share-btn:hover { background:rgba(255,255,255,.06); }
+.share-btn-icon {
+  width:36px; height:36px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+
+/* ── TOAST ── */
+.toast-wrap {
+  position:fixed; bottom:28px; left:50%;
+  transform:translateX(-50%) translateY(120px);
+  z-index:999; transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+}
+.toast-wrap.show { transform:translateX(-50%) translateY(0); }
+.toast-inner {
+  background:var(--white); color:#000;
+  padding:12px 24px; border-radius:9999px;
+  font-size:14px; font-weight:600;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+  white-space:nowrap; display:flex; align-items:center; gap:8px;
+}
+
+/* ════════════════════════════════════════
+   MOBILE BOTTOM NAV
+════════════════════════════════════════ */
+.bottom-nav {
+  display:none;
+  position:fixed; bottom:0; left:0; right:0; z-index:200;
+  background:rgba(0,0,0,.92); backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  padding:0 0 env(safe-area-inset-bottom);
+}
+.bottom-nav-inner {
+  display:flex; align-items:center; height:52px;
+}
+.bn-item {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  background:none; border:none; color:var(--muted);
+  cursor:pointer; padding:8px; transition:color .2s;
+  position:relative;
+}
+.bn-item.active { color:var(--gold); }
+.bn-item .bn-icon { font-size:22px; }
+.bn-badge {
+  position:absolute; top:6px; right:calc(50% - 14px);
+  width:8px; height:8px; background:var(--red);
+  border-radius:50%; border:2px solid var(--bg); display:none;
+}
+.bn-badge.show { display:block; }
+
+/* Mobile compose FAB */
+.fab {
+  display:none; position:fixed; bottom:70px; right:20px; z-index:199;
+  width:52px; height:52px; border-radius:50%;
+  background:var(--gold); border:none;
+  font-size:24px; color:#000; cursor:pointer;
+  box-shadow:0 4px 20px rgba(245,200,66,.4);
+  align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.fab:active { transform:scale(.92); }
+
+/* ════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  :root { --rs-w: 0px; }
+  .right-sidebar { display:none; }
+  #appWrap { grid-template-columns: var(--ls-w) 1fr; }
+}
+@media (max-width: 768px) {
+  :root { --ls-w: 68px; }
+  .left-sidebar { padding: 0 8px 16px; align-items:center; }
+  .ls-logo { padding:14px 8px; justify-content:center; }
+  .ls-logo span:last-child { display:none; }
+  .nav-label { display:none; }
+  .nav-item { justify-content:center; padding:12px; gap:0; }
+  .ls-compose-btn { font-size:0; padding:14px; width:44px; height:44px; border-radius:50%; }
+  .ls-compose-btn::before { content:'✎'; font-size:20px; }
+  .ls-profile-info, .ls-profile-dots { display:none; }
+  .ls-profile-btn { justify-content:center; padding:10px 8px; }
+  .bottom-nav { display:block; }
+  .fab { display:flex; }
+  .main-feed { padding-bottom:64px; }
+  .compose-box { display:none !important; }
+  #appWrap { grid-template-columns: 68px 1fr; }
+  .admin-stats-grid { grid-template-columns:1fr 1fr; }
+  .auth-split { grid-template-columns:1fr; }
+  .auth-left { display:none; }
+  .auth-right { padding:40px 24px; }
+}
+@media (max-width: 500px) {
+  #appWrap { grid-template-columns: 1fr; }
+  .left-sidebar { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ AUTH ══════════════════ -->
+<div id="authPage">
+  <div class="auth-split">
+    <div class="auth-left">
+      <div class="auth-logo-giant">M·</div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-headline">A rede que<br>pensa com <em>você.</em></div>
+      <div class="auth-card">
+        <div id="continueSection" style="display:none">
+          <button class="continue-btn" onclick="continueSession()">
+            <div class="continue-av" id="contAv">?</div>
+            <div class="continue-info">
+              <div class="continue-name" id="contName">—</div>
+              <div class="continue-em" id="contEmail">—</div>
+            </div>
+            <span style="color:var(--gold);margin-left:auto;">→</span>
+          </button>
+          <div class="auth-sep">ou entre com outra conta</div>
+        </div>
+        <div class="tabs-row">
+          <button class="tab-pill active" onclick="switchTab('login',this)">Entrar</button>
+          <button class="tab-pill" onclick="switchTab('register',this)">Criar conta</button>
+        </div>
+        <div id="formLogin">
+          <button class="google-btn" onclick="doLoginGoogle()">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.33 2.56 13.22l7.98 6.2C12.43 13.16 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.2C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.66-13.46-8.92l-7.98 6.19C6.51 42.67 14.62 48 24 48z"/></svg>
+            Entrar com Google
+          </button>
+          <div class="auth-sep">ou</div>
+          <div class="field"><label>E-mail</label><input type="email" id="loginEmail" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+          <div class="field"><label>Senha</label><input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+          <div class="auth-forgot" onclick="showForgotPassword()">Esqueci minha senha</div>
+          <button class="btn-primary" onclick="doLogin()">Entrar</button>
+        </div>
+        <div id="formRegister" style="display:none">
+          <button class="google-btn" onclick="doLoginGoogle()">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.33 2.56 13.22l7.98 6.2C12.43 13.16 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.2C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.66-13.46-8.92l-7.98 6.19C6.51 42.67 14.62 48 24 48z"/></svg>
+            Criar conta com Google
+          </button>
+          <div class="auth-sep">ou</div>
+          <div class="field"><label>Nome</label><input type="text" id="regName" placeholder="Como te chamamos?"></div>
+          <div class="field"><label>@handle</label><input type="text" id="regHandle" placeholder="seu_handle"></div>
+          <div class="field"><label>E-mail</label><input type="email" id="regEmail" placeholder="seu@email.com"></div>
+          <div class="field"><label>Senha</label><input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()"></div>
+          <button class="btn-primary" onclick="doRegister()">Criar conta</button>
+          <div class="auth-switch">Já tem conta? <a onclick="switchTab('login')">Entrar</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div id="appWrap" style="display:none">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="left-sidebar">
+    <a class="ls-logo" href="#">
+      <span class="ls-logo-dot"></span>
+      <span>MindOnline</span>
+    </a>
+
+    <button class="nav-item active" id="navFeed" onclick="goPage('feed',this)">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Início</span>
+    </button>
+    <button class="nav-item" id="navNotif" onclick="goPage('notif',this)">
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">Notificações</span>
+      <span class="nav-badge" id="notifDot"></span>
+    </button>
+    <button class="nav-item" id="navFollowing" onclick="goPage('following',this)">
+      <span class="nav-icon">👥</span>
+      <span class="nav-label">Seguindo</span>
+    </button>
+    <button class="nav-item" id="navProfile" onclick="goPage('myprofile',this)">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Perfil</span>
+    </button>
+    <button class="nav-item nav-admin" id="navAdmin" onclick="goPage('admin',this)" style="display:none">
+      <span class="nav-icon">🛡️</span>
+      <span class="nav-label">Admin</span>
+    </button>
+
+    <button class="ls-compose-btn" onclick="openComposeModal()">Publicar</button>
+
+    <button class="ls-profile-btn" onclick="goPage('myprofile',document.getElementById('navProfile'))">
+      <div class="av av-40" id="lsAvatar" style="background:rgba(245,200,66,.2);color:var(--gold);">?</div>
+      <div class="ls-profile-info">
+        <div class="ls-profile-name" id="lsName">—</div>
+        <div class="ls-profile-handle" id="lsHandle">—</div>
+      </div>
+      <span class="ls-profile-dots" onclick="event.stopPropagation();doLogout()">⇠ Sair</span>
+    </button>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-feed">
+
+    <!-- FEED PAGE -->
+    <div id="pageFeed">
+      <div class="feed-header">
+        <div class="feed-header-title">Para você</div>
+        <div class="feed-tabs-bar">
+          <button class="ftab active" id="tabPV" onclick="switchFeed('pv')">Para você</button>
+          <button class="ftab" id="tabTop" onclick="switchFeed('top')">Em alta</button>
+          <button class="ftab" id="tabSeg" onclick="switchFeed('seg')">Seguindo</button>
+        </div>
+      </div>
+      <div class="compose-box">
+        <div class="av av-40" id="composeAv" style="background:rgba(245,200,66,.2);color:var(--gold);">?</div>
+        <div class="compose-right">
+          <textarea class="compose-ta" id="composeTxt" placeholder="O que está acontecendo?" rows="3" oninput="updateChar()"></textarea>
+          <div id="imgPreview"></div>
+          <div class="compose-actions">
+            <div class="compose-tools">
+              <button class="tool-btn" onclick="document.getElementById('fileIn').click()" title="Imagem">🖼</button>
+              <input type="file" id="fileIn" accept="image/*" style="display:none" onchange="previewFile(this)">
+            </div>
+            <div class="compose-right-actions">
+              <span class="char-ring" id="charCount">280</span>
+              <button class="btn-post" onclick="publishPost()">Publicar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="postsArea"><div class="spinner"></div></div>
+    </div>
+
+    <!-- NOTIF PAGE -->
+    <div id="pageNotif" style="display:none">
+      <div class="page-header">
+        <button class="page-back-btn" onclick="goPage('feed',document.getElementById('navFeed'))">←</button>
+        <div>
+          <div class="page-title">Notificações</div>
+        </div>
+      </div>
+      <div id="notifList"><div class="spinner"></div></div>
+    </div>
+
+    <!-- SEGUINDO PAGE -->
+    <div id="pageFollowing" style="display:none">
+      <div class="page-header">
+        <button class="page-back-btn" onclick="goPage('feed',document.getElementById('navFeed'))">←</button>
+        <div>
+          <div class="page-title">Seguindo</div>
+        </div>
+      </div>
+      <div id="followingList"><div class="spinner"></div></div>
+    </div>
+
+    <!-- PERFIL PAGE -->
+    <div id="pageProfile" style="display:none">
+      <div id="profileContent"></div>
+    </div>
+
+    <!-- ADMIN PAGE -->
+    <div id="pageAdmin" style="display:none">
+      <div class="page-header">
+        <button class="page-back-btn" onclick="goPage('feed',document.getElementById('navFeed'))">←</button>
+        <div>
+          <div class="page-title">Painel Admin</div>
+          <div class="page-subtitle">Controle total da plataforma</div>
+        </div>
+      </div>
+      <div class="admin-wrap">
+        <div id="adminContent"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT SIDEBAR -->
+  <aside class="right-sidebar">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInput" placeholder="Pesquisar MindOnline" oninput="handleSearch()">
+        <div class="search-dropdown" id="searchDrop"></div>
+      </div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-head">🔥 Tendências</div>
+      <div class="trend-row"><div class="trend-cat">MindOnline</div><div class="trend-tag">#ComunicacaoEtica</div><div class="trend-cnt" id="trendCount">carregando...</div></div>
+      <div class="trend-row"><div class="trend-cat">Tecnologia</div><div class="trend-tag">#IA</div><div class="trend-cnt">18 mil posts</div></div>
+      <div class="trend-row"><div class="trend-cat">Petrolina, PE</div><div class="trend-tag">#EREMCC</div><div class="trend-cnt">412 posts</div></div>
+      <div class="trend-row"><div class="trend-cat">Bem-estar</div><div class="trend-tag">#SaudeMental</div><div class="trend-cnt">9.1 mil posts</div></div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-head">👤 Quem seguir</div>
+      <div id="whoFollow"><div class="spinner" style="margin:16px auto;width:20px;height:20px;"></div></div>
+    </div>
+
+    <div style="font-size:12px;color:var(--muted);padding:8px 4px;line-height:1.9;">
+      <a href="index.html" style="color:var(--muted);">← MindOnline</a> · © 2026
+    </div>
+  </aside>
+
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-inner">
+    <button class="bn-item active" id="bnFeed" onclick="goPage('feed',document.getElementById('navFeed'));setBnActive(this)">
+      <span class="bn-icon">🏠</span>
+    </button>
+    <button class="bn-item" id="bnNotif" onclick="goPage('notif',document.getElementById('navNotif'));setBnActive(this)">
+      <span class="bn-icon">🔔</span>
+      <span class="bn-badge" id="bnNotifDot"></span>
+    </button>
+    <button class="bn-item" id="bnSearch" onclick="toggleMobileSearch()">
+      <span class="bn-icon">🔍</span>
+    </button>
+    <button class="bn-item" id="bnProfile" onclick="goPage('myprofile',document.getElementById('navProfile'));setBnActive(this)">
+      <span class="bn-icon">👤</span>
+    </button>
+  </div>
+</nav>
+<button class="fab" onclick="openComposeModal()">✎</button>
+
+<!-- MODAL COMPOSE (mobile) -->
+<div class="modal-overlay" id="composeModal" onclick="if(event.target===this)closeModal('composeModal')">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-hdr">
+      <button class="modal-close" onclick="closeModal('composeModal')">✕</button>
+      <div class="modal-ttl">Nova publicação</div>
+    </div>
+    <div style="padding:20px;display:flex;gap:12px;">
+      <div class="av av-40" id="modalComposeAv" style="background:rgba(245,200,66,.2);color:var(--gold);">?</div>
+      <div style="flex:1">
+        <textarea id="composeTxtModal" placeholder="O que está acontecendo?" style="width:100%;background:none;border:none;outline:none;color:var(--white);font-size:18px;resize:none;min-height:100px;font-family:var(--body);" oninput="updateCharModal()"></textarea>
+        <div id="imgPreviewModal"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div style="display:flex;gap:4px;">
+            <button class="tool-btn" onclick="document.getElementById('fileInModal').click()">🖼</button>
+            <input type="file" id="fileInModal" accept="image/*" style="display:none" onchange="previewFileModal(this)">
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="char-ring" id="charCountModal">280</span>
+            <button class="btn-post" onclick="publishPostModal()">Publicar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMENTÁRIOS -->
+<div class="modal-overlay" id="commentModal" onclick="if(event.target===this)closeModal('commentModal')">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <button class="modal-close" onclick="closeModal('commentModal')">✕</button>
+      <div class="modal-ttl" id="commentModalTitle">Comentários</div>
+    </div>
+    <div id="modalPostContent"></div>
+    <div id="commentsContainer" style="flex:1;overflow-y:auto;min-height:60px;"></div>
+    <div class="modal-input-row" id="commentInputRow">
+      <div class="av av-34" id="modalAv" style="background:rgba(245,200,66,.2);color:var(--gold);">?</div>
+      <input type="text" id="commentInput" placeholder="Escreva um comentário..." onkeydown="if(event.key==='Enter')submitComment()">
+      <button class="btn-post" onclick="submitComment()" style="padding:8px 14px;font-size:13px;">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMPARTILHAR -->
+<div class="modal-overlay" id="shareModal" onclick="if(event.target===this)closeModal('shareModal')">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-hdr">
+      <button class="modal-close" onclick="closeModal('shareModal')">✕</button>
+      <div class="modal-ttl">Compartilhar</div>
+    </div>
+    <div class="share-options">
+      <button class="share-btn" onclick="copyLink()">
+        <div class="share-btn-icon" style="background:rgba(255,255,255,.07)">🔗</div>Copiar link
+      </button>
+      <button class="share-btn" onclick="shareWA()">
+        <div class="share-btn-icon" style="background:rgba(37,211,102,.1)">📱</div>WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR PERFIL -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeModal('editModal')">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-hdr">
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+      <div class="modal-ttl">Editar perfil</div>
+    </div>
+    <div style="padding:20px">
+      <div class="field"><label>Nome</label><input type="text" id="editName"></div>
+      <div class="field"><label>@handle</label><input type="text" id="editHandle"></div>
+      <div class="field"><label>Bio</label><textarea id="editBio" style="resize:vertical;min-height:80px" placeholder="Fale sobre você..."></textarea></div>
+      <button class="btn-primary" onclick="saveProfile()">Salvar alterações</button>
+      <button onclick="openModal('changePwModal')" style="width:100%;margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--border);font-family:var(--body);font-size:14px;font-weight:600;padding:11px;cursor:pointer;border-radius:9999px;">🔑 Trocar senha</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ESQUECI SENHA -->
+<div class="modal-overlay" id="forgotModal" onclick="if(event.target===this)closeModal('forgotModal')">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-hdr">
+      <button class="modal-close" onclick="closeModal('forgotModal')">✕</button>
+      <div class="modal-ttl">Recuperar senha</div>
+    </div>
+    <div style="padding:20px">
+      <p style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.6">Digite seu e-mail para receber um link de recuperação.</p>
+      <div class="field"><label>E-mail</label><input type="email" id="forgotEmail" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')sendForgot()"></div>
+      <button class="btn-primary" onclick="sendForgot()">Enviar link</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TROCAR SENHA -->
+<div class="modal-overlay" id="changePwModal" onclick="if(event.target===this)closeModal('changePwModal')">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-hdr">
+      <button class="modal-close" onclick="closeModal('changePwModal')">✕</button>
+      <div class="modal-ttl">Trocar senha</div>
+    </div>
+    <div style="padding:20px">
+      <div class="field"><label>Nova senha</label><input type="password" id="newPw1" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')changePassword()"></div>
+      <div class="field"><label>Confirmar senha</label><input type="password" id="newPw2" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')changePassword()"></div>
+      <button class="btn-primary" onclick="changePassword()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap">
+  <div class="toast-inner" id="toastInner">✓ Ação realizada</div>
+</div>
+
+<script>
+const SB_URL="https://etroveencnwkplyntjik.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0cm92ZWVuY253a3BseW50amlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTE1NzIsImV4cCI6MjA5MDM2NzU3Mn0.b-mFND_1ONKe2dXWFfQ8JsilmEDneD1TAFovQ9Xgm3o";
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+let ME=null,MY_PROFILE=null,POSTS=[],FEED_MODE='pv',ACTIVE_POST=null,SHARE_POST=null,SEL_FILE=null,SEL_FILE_MODAL=null;
+const AV_BG=['rgba(245,200,66,.2)','rgba(79,142,247,.2)','rgba(244,33,46,.2)','rgba(0,186,124,.2)'];
+const AV_CLR=['#f5c842','#4f8ef7','#f4212e','#00ba7c'];
+const sh=s=>[...String(s||'')].reduce((a,c)=>a+c.charCodeAt(0),0);
+const avS=id=>{const i=sh(id)%4;return`background:${AV_BG[i]};color:${AV_CLR[i]};`;};
+const esc=s=>s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'';
+const ago=ts=>{if(!ts)return'';const d=Math.floor((Date.now()-new Date(ts))/1000);if(d<60)return'agora';if(d<3600)return Math.floor(d/60)+'min';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';};
+
+let _toastT;
+function toast(msg){const w=document.getElementById('toastWrap');document.getElementById('toastInner').textContent=msg;w.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>w.classList.remove('show'),2800);}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openComposeModal(){
+  const el=document.getElementById('modalComposeAv');
+  if(el){el.textContent=myInits();el.style.cssText=avS(ME?.id||'x');}
+  openModal('composeModal');
+}
+
+// ── INIT ──
+async function init(){
+  const hash=window.location.hash;
+  if(hash.includes('type=recovery')||window.location.search.includes('reset=1')){
+    const{data:{user}}=await sb.auth.getUser();
+    if(user){ME=user;await fetchProfile();startApp();openModal('changePwModal');return;}
+  }
+  const{data:{session}}=await sb.auth.getSession();
+  if(session?.user){ME=session.user;await fetchProfile();startApp();return;}
+  const{data:{user}}=await sb.auth.getUser();
+  if(user){ME=user;await fetchProfile();showContinue();}
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session?.user&&!ME){
+      ME=session.user;await fetchProfile();
+      if(!MY_PROFILE){
+        const name=ME.user_metadata?.full_name||ME.email.split('@')[0];
+        const handle=name.toLowerCase().replace(/[^a-z0-9]/g,'_');
+        await sb.from('profiles').upsert({id:ME.id,name,handle});
+        await fetchProfile();
+      }
+      startApp();
+    }
+  });
+}
+
+function showContinue(){
+  const name=MY_PROFILE?.name||ME.email.split('@')[0];
+  document.getElementById('contAv').textContent=name.slice(0,2).toUpperCase();
+  document.getElementById('contName').textContent=name;
+  document.getElementById('contEmail').textContent=ME.email;
+  document.getElementById('continueSection').style.display='block';
+}
+async function continueSession(){startApp();}
+
+function switchTab(tab,btn){
+  document.getElementById('formLogin').style.display=tab==='login'?'block':'none';
+  document.getElementById('formRegister').style.display=tab==='register'?'block':'none';
+  document.querySelectorAll('.tab-pill').forEach((b,i)=>b.classList.toggle('active',(i===0)===(tab==='login')));
+}
+
+// ── AUTH ──
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass)return toast('Preencha e-mail e senha');
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error)return toast('Erro: '+error.message);
+  ME=data.user;await fetchProfile();startApp();
+}
+async function doRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const handle=document.getElementById('regHandle').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const email=document.getElementById('regEmail').value.trim();
+  const pass=document.getElementById('regPassword').value;
+  if(!name||!email||!pass)return toast('Preencha todos os campos');
+  if(pass.length<6)return toast('Senha: mínimo 6 caracteres');
+  const{data,error}=await sb.auth.signUp({email,password:pass});
+  if(error)return toast('Erro: '+error.message);
+  if(data.user){
+    await sb.from('profiles').upsert({id:data.user.id,name,handle:handle||name.toLowerCase().replace(/\s+/g,'_')});
+    ME=data.user;await fetchProfile();startApp();toast('Bem-vindo, '+name+'! 👋');
+  }else toast('Confirme seu e-mail e faça login.');
+}
+async function doLogout(){
+  await sb.auth.signOut();ME=null;MY_PROFILE=null;POSTS=[];
+  document.getElementById('appWrap').style.display='none';
+  document.getElementById('authPage').style.display='flex';
+  document.getElementById('continueSection').style.display='none';
+}
+async function doLoginGoogle(){
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+  if(error)toast('Erro Google: '+error.message);
+}
+function showForgotPassword(){
+  const email=document.getElementById('loginEmail')?.value||'';
+  if(email)document.getElementById('forgotEmail').value=email;
+  openModal('forgotModal');
+}
+async function sendForgot(){
+  const email=document.getElementById('forgotEmail').value.trim();
+  if(!email)return toast('Digite seu e-mail');
+  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href+'?reset=1'});
+  if(error)return toast('Erro: '+error.message);
+  closeModal('forgotModal');toast('Link enviado! Verifique seu e-mail 📧');
+}
+async function changePassword(){
+  const p1=document.getElementById('newPw1').value;
+  const p2=document.getElementById('newPw2').value;
+  if(!p1||!p2)return toast('Preencha os dois campos');
+  if(p1.length<6)return toast('Mínimo 6 caracteres');
+  if(p1!==p2)return toast('As senhas não coincidem');
+  const{error}=await sb.auth.updateUser({password:p1});
+  if(error)return toast('Erro: '+error.message);
+  closeModal('changePwModal');
+  document.getElementById('newPw1').value='';document.getElementById('newPw2').value='';
+  toast('Senha alterada com sucesso! ✓');
+}
+
+async function fetchProfile(){
+  const{data}=await sb.from('profiles').select('*').eq('id',ME.id).maybeSingle();
+  MY_PROFILE=data;
+}
+const myName=()=>MY_PROFILE?.name||ME.email.split('@')[0];
+const myHandle=()=>'@'+(MY_PROFILE?.handle||myName().toLowerCase().replace(/\s+/g,'_'));
+const myInits=()=>myName().slice(0,2).toUpperCase();
+const isAdmin=()=>MY_PROFILE?.is_admin===true;
+
+function updateNavUI(){
+  const s=avS(ME.id);
+  ['composeAv','modalAv','modalComposeAv'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=myInits();el.style.cssText=';'+s;}});
+  const lsAv=document.getElementById('lsAvatar');
+  if(lsAv){lsAv.textContent=myInits();lsAv.style.cssText=s;}
+  document.getElementById('lsName').textContent=myName();
+  document.getElementById('lsHandle').textContent=myHandle();
+  if(isAdmin())document.getElementById('navAdmin').style.display='flex';
+}
+
+// ── START ──
+function startApp(){
+  document.getElementById('authPage').style.display='none';
+  document.getElementById('appWrap').style.display='grid';
+  updateNavUI();loadPosts();loadStats();loadWhoToFollow();loadUnread();
+}
+
+// ── PAGES ──
+const PAGES=['pageFeed','pageNotif','pageFollowing','pageProfile','pageAdmin'];
+function goPage(page,btn){
+  PAGES.forEach(p=>document.getElementById(p).style.display='none');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(page==='feed'){document.getElementById('pageFeed').style.display='block';loadPosts();}
+  if(page==='notif'){document.getElementById('pageNotif').style.display='block';loadNotifs();markRead();}
+  if(page==='following'){document.getElementById('pageFollowing').style.display='block';loadFollowingPage();}
+  if(page==='myprofile'){document.getElementById('pageProfile').style.display='block';openProfile(ME.id);}
+  if(page==='admin'&&isAdmin()){document.getElementById('pageAdmin').style.display='block';loadAdmin();}
+}
+function setBnActive(btn){
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function toggleMobileSearch(){
+  const inp=document.getElementById('searchInput');
+  if(inp)inp.focus();
+}
+
+// ── FEED ──
+function switchFeed(mode){
+  FEED_MODE=mode;
+  ['tabPV','tabTop','tabSeg'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById(mode==='pv'?'tabPV':mode==='top'?'tabTop':'tabSeg').classList.add('active');
+  // Update feed header title
+  const titles={pv:'Para você',top:'Em alta',seg:'Seguindo'};
+  document.querySelector('.feed-header-title').textContent=titles[mode];
+  if(mode==='seg')loadSegFeed();else renderFeed();
+}
+function renderFeed(){
+  let list=[...POSTS];
+  if(FEED_MODE==='top')list.sort((a,b)=>(b._likes||0)-(a._likes||0));
+  renderPosts(list,document.getElementById('postsArea'));
+}
+
+async function loadPosts(){
+  document.getElementById('postsArea').innerHTML='<div class="spinner"></div>';
+  const{data:posts,error}=await sb.from('posts').select('*').order('is_pinned',{ascending:false}).order('id',{ascending:false});
+  if(error){document.getElementById('postsArea').innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div>Erro: ${error.message}</div>`;return;}
+  if(!posts?.length){document.getElementById('postsArea').innerHTML='<div class="empty"><div class="empty-icon">✏️</div>Nenhum post ainda. Seja o primeiro!</div>';POSTS=[];return;}
+  await enrichAndCache(posts);renderFeed();
+}
+
+async function loadSegFeed(){
+  document.getElementById('postsArea').innerHTML='<div class="spinner"></div>';
+  const{data:f}=await sb.from('follows').select('following_id').eq('follower_id',ME.id);
+  if(!f?.length){document.getElementById('postsArea').innerHTML='<div class="empty"><div class="empty-icon">👥</div>Você ainda não segue ninguém.</div>';return;}
+  const ids=f.map(x=>x.following_id);
+  const{data:posts}=await sb.from('posts').select('*').in('user_id',ids).order('id',{ascending:false});
+  if(!posts?.length){document.getElementById('postsArea').innerHTML='<div class="empty"><div class="empty-icon">📭</div>Ninguém que você segue postou ainda.</div>';return;}
+  await enrichAndCache(posts);renderPosts(POSTS,document.getElementById('postsArea'));
+}
+
+async function enrichAndCache(posts){
+  if(!posts.length){POSTS=[];return;}
+  const ids=posts.map(p=>p.id);
+  const userIds=[...new Set(posts.map(p=>p.user_id))];
+  const[lr,cr,mlr,pr]=await Promise.all([
+    sb.from('likes').select('post_id').in('post_id',ids),
+    sb.from('comments').select('post_id').in('post_id',ids),
+    sb.from('likes').select('post_id').eq('user_id',ME.id).in('post_id',ids),
+    sb.from('profiles').select('id,name,handle,verified,is_admin').in('id',userIds)
+  ]);
+  const lm={},cm={},pm={};
+  (lr.data||[]).forEach(r=>{lm[r.post_id]=(lm[r.post_id]||0)+1;});
+  (cr.data||[]).forEach(r=>{cm[r.post_id]=(cm[r.post_id]||0)+1;});
+  (pr.data||[]).forEach(r=>{pm[r.id]=r;});
+  const ls=new Set((mlr.data||[]).map(r=>r.post_id));
+  POSTS=posts.map(p=>({...p,profiles:pm[p.user_id]||null,_likes:lm[p.id]||0,_comments:cm[p.id]||0,_liked:ls.has(p.id)}));
+}
+
+function renderPosts(list,container){
+  if(!list?.length){container.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>Nenhum post encontrado.</div>';return;}
+  container.innerHTML=list.map(postHTML).join('');
+}
+
+function postHTML(p){
+  const name=p.profiles?.name||'Usuário';
+  const handle=p.profiles?.handle||name.toLowerCase().replace(/\s+/g,'_');
+  const inits=name.slice(0,2).toUpperCase();
+  const style=avS(p.user_id);
+  const canDel=p.user_id===ME.id||isAdmin();
+  return`<div class="post-card" id="pi-${p.id}">
+    <div class="post-left">
+      <div class="av av-40" style="${style};cursor:pointer;" onclick="openProfile('${p.user_id}')">${inits}</div>
+    </div>
+    <div class="post-right">
+      ${p.is_pinned?'<div class="pinned-flag">📌 Fixado</div>':''}
+      <div class="post-header">
+        <span class="post-author-name" onclick="openProfile('${p.user_id}')">${esc(name)}</span>
+        ${p.profiles?.verified?'<span class="badge-v">✦</span>':''}
+        ${p.profiles?.is_admin?'<span class="badge-admin">Admin</span>':''}
+        <span class="post-handle-time">@${esc(handle)} · ${ago(p.created_at)}</span>
+        ${canDel?`<button class="del-btn" onclick="event.stopPropagation();deletePost(${p.id},'${p.user_id}')">🗑</button>`:''}
+      </div>
+      ${p.text?`<div class="post-body-text">${esc(p.text)}</div>`:''}
+      ${p.image_url?`<img class="post-img" src="${p.image_url}" loading="lazy">`:''}
+      <div class="post-actions">
+        <button class="act-btn" onclick="openComments(${p.id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <span id="cc-${p.id}">${p._comments||''}</span>
+        </button>
+        <button class="act-btn ${p._liked?'liked':''}" id="lb-${p.id}" onclick="toggleLike(${p.id})">
+          <svg viewBox="0 0 24 24" fill="${p._liked?'currentColor':'none'}" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <span id="lc-${p.id}">${p._likes||''}</span>
+        </button>
+        <button class="act-btn" onclick="openShare(${p.id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── LIKES ──
+async function toggleLike(postId){
+  const post=POSTS.find(p=>p.id===postId);if(!post)return;
+  const btn=document.getElementById(`lb-${postId}`);
+  if(post._liked){
+    await sb.from('likes').delete().eq('post_id',postId).eq('user_id',ME.id);
+    post._liked=false;post._likes=Math.max(0,post._likes-1);
+  }else{
+    const{error}=await sb.from('likes').insert({post_id:postId,user_id:ME.id});if(error)return;
+    post._liked=true;post._likes++;
+    if(post.user_id!==ME.id)sb.from('notifications').insert({user_id:post.user_id,from_user_id:ME.id,type:'like',post_id:postId}).catch(()=>{});
+  }
+  if(btn){btn.classList.toggle('liked',post._liked);btn.querySelector('svg').setAttribute('fill',post._liked?'currentColor':'none');document.getElementById(`lc-${postId}`).textContent=post._likes||'';}
+}
+
+// ── PUBLICAR ──
+async function _publish(txt,file){
+  if(!txt&&!file)return toast('Escreva algo ou adicione uma imagem');
+  if(txt.length>280)return toast('Máximo 280 caracteres');
+  let imageUrl=null;
+  if(file){
+    const fname=`${ME.id}-${Date.now()}.${file.name.split('.').pop()}`;
+    const{error:upErr}=await sb.storage.from('images').upload(fname,file,{upsert:true});
+    if(upErr)return toast('Erro no upload: '+upErr.message);
+    imageUrl=sb.storage.from('images').getPublicUrl(fname).data.publicUrl;
+  }
+  const{error}=await sb.from('posts').insert({text:txt,user_id:ME.id,image_url:imageUrl,is_pinned:false});
+  if(error)return toast('Erro ao publicar: '+error.message);
+  toast('Publicado! ✓');loadPosts();loadStats();
+}
+async function publishPost(){
+  const txt=document.getElementById('composeTxt').value.trim();
+  await _publish(txt,SEL_FILE);
+  document.getElementById('composeTxt').value='';document.getElementById('charCount').textContent='280';clearFile();
+}
+async function publishPostModal(){
+  const txt=document.getElementById('composeTxtModal').value.trim();
+  await _publish(txt,SEL_FILE_MODAL);
+  document.getElementById('composeTxtModal').value='';document.getElementById('charCountModal').textContent='280';clearFileModal();closeModal('composeModal');
+}
+
+function updateChar(){const l=document.getElementById('composeTxt').value.length;const el=document.getElementById('charCount');el.textContent=280-l;el.style.color=l>260?'var(--red)':'var(--muted)';}
+function updateCharModal(){const l=document.getElementById('composeTxtModal').value.length;const el=document.getElementById('charCountModal');el.textContent=280-l;el.style.color=l>260?'var(--red)':'var(--muted)';}
+
+function previewFile(input){
+  SEL_FILE=input.files[0]||null;
+  const w=document.getElementById('imgPreview');w.innerHTML='';
+  if(!SEL_FILE)return;
+  const r=new FileReader();r.onload=e=>{w.innerHTML=`<div class="img-prev-wrap"><img src="${e.target.result}"><button class="img-prev-rm" onclick="clearFile()">✕</button></div>`;};r.readAsDataURL(SEL_FILE);
+}
+function clearFile(){SEL_FILE=null;document.getElementById('fileIn').value='';document.getElementById('imgPreview').innerHTML='';}
+function previewFileModal(input){
+  SEL_FILE_MODAL=input.files[0]||null;
+  const w=document.getElementById('imgPreviewModal');w.innerHTML='';
+  if(!SEL_FILE_MODAL)return;
+  const r=new FileReader();r.onload=e=>{w.innerHTML=`<div class="img-prev-wrap"><img src="${e.target.result}"><button class="img-prev-rm" onclick="clearFileModal()">✕</button></div>`;};r.readAsDataURL(SEL_FILE_MODAL);
+}
+function clearFileModal(){SEL_FILE_MODAL=null;document.getElementById('fileInModal').value='';document.getElementById('imgPreviewModal').innerHTML='';}
+
+async function deletePost(postId,ownerId){
+  if(!isAdmin()&&ownerId!==ME.id)return;
+  if(!confirm('Deletar este post?'))return;
+  await sb.from('likes').delete().eq('post_id',postId);
+  await sb.from('comments').delete().eq('post_id',postId);
+  await sb.from('posts').delete().eq('id',postId);
+  toast('Post deletado');loadPosts();loadStats();
+}
+
+// ── COMENTÁRIOS ──
+async function openComments(postId){
+  ACTIVE_POST=POSTS.find(p=>p.id===postId);
+  if(!ACTIVE_POST){const{data}=await sb.from('posts').select('*').eq('id',postId).single();if(data){ACTIVE_POST={...data,_likes:0,_comments:0,_liked:false};POSTS.push(ACTIVE_POST);}}
+  if(!ACTIVE_POST)return;
+  const name=ACTIVE_POST.profiles?.name||'Usuário';
+  document.getElementById('commentModalTitle').textContent='Comentários';
+  document.getElementById('commentInputRow').style.display='flex';
+  document.getElementById('modalPostContent').innerHTML=`<div class="post-card" style="border-radius:0;cursor:default;">
+    <div class="post-left"><div class="av av-40" style="${avS(ACTIVE_POST.user_id)}">${name.slice(0,2).toUpperCase()}</div></div>
+    <div class="post-right">
+      <div class="post-header"><span class="post-author-name">${esc(name)}</span></div>
+      ${ACTIVE_POST.text?`<div class="post-body-text">${esc(ACTIVE_POST.text)}</div>`:''}
+      ${ACTIVE_POST.image_url?`<img class="post-img" src="${ACTIVE_POST.image_url}">`:''}
+    </div>
+  </div>`;
+  openModal('commentModal');await loadComments();
+}
+
+async function loadComments(){
+  const c=document.getElementById('commentsContainer');c.innerHTML='<div class="spinner"></div>';
+  const{data,error}=await sb.from('comments').select('*').eq('post_id',ACTIVE_POST.id).order('id',{ascending:true});
+  if(error||!data?.length){c.innerHTML='<div class="empty" style="padding:20px 0;">Nenhum comentário ainda.</div>';return;}
+  const uids=[...new Set(data.map(cm=>cm.user_id))];
+  const{data:prData}=await sb.from('profiles').select('id,name').in('id',uids);
+  const pm={};(prData||[]).forEach(p=>{pm[p.id]=p;});
+  c.innerHTML=data.map(cm=>{const n=pm[cm.user_id]?.name||'Usuário';return`<div class="comment-item">
+    <div class="av av-34" style="${avS(cm.user_id)};cursor:pointer;flex-shrink:0;" onclick="closeModal('commentModal');openProfile('${cm.user_id}')">${n.slice(0,2).toUpperCase()}</div>
+    <div class="comment-body">
+      <div class="comment-author" onclick="closeModal('commentModal');openProfile('${cm.user_id}')">${esc(n)}</div>
+      <div class="comment-txt">${esc(cm.text)}</div>
+    </div>
+  </div>`;}).join('');
+}
+
+async function submitComment(){
+  const txt=document.getElementById('commentInput').value.trim();
+  if(!txt||!ACTIVE_POST)return;
+  const{error}=await sb.from('comments').insert({post_id:ACTIVE_POST.id,user_id:ME.id,text:txt});
+  if(error)return toast('Erro ao comentar');
+  document.getElementById('commentInput').value='';
+  ACTIVE_POST._comments++;
+  const el=document.getElementById(`cc-${ACTIVE_POST.id}`);if(el)el.textContent=ACTIVE_POST._comments;
+  if(ACTIVE_POST.user_id!==ME.id)sb.from('notifications').insert({user_id:ACTIVE_POST.user_id,from_user_id:ME.id,type:'comment',post_id:ACTIVE_POST.id}).catch(()=>{});
+  await loadComments();toast('Comentário publicado!');
+}
+
+// ── COMPARTILHAR ──
+function openShare(id){SHARE_POST=POSTS.find(p=>p.id===id);openModal('shareModal');}
+function copyLink(){navigator.clipboard?.writeText(`${location.origin}${location.pathname}#pi-${SHARE_POST?.id}`).catch(()=>{});toast('Link copiado! 🔗');closeModal('shareModal');}
+function shareWA(){const u=`${location.origin}${location.pathname}#pi-${SHARE_POST?.id}`;window.open(`https://wa.me/?text=${encodeURIComponent(`${SHARE_POST?.text||'Post'}\n${u}`)}`,'_blank');closeModal('shareModal');}
+
+// ── PERFIL ──
+async function openProfile(userId){
+  PAGES.forEach(p=>document.getElementById(p).style.display='none');
+  document.getElementById('pageProfile').style.display='block';
+  document.getElementById('profileContent').innerHTML='<div class="spinner"></div>';
+  const[{data:profile},{data:posts},{data:frs},{data:fing},{data:amF}]=await Promise.all([
+    sb.from('profiles').select('*').eq('id',userId).single(),
+    sb.from('posts').select('*').eq('user_id',userId).order('id',{ascending:false}),
+    sb.from('follows').select('id').eq('following_id',userId),
+    sb.from('follows').select('id').eq('follower_id',userId),
+    sb.from('follows').select('id').eq('follower_id',ME.id).eq('following_id',userId).maybeSingle()
+  ]);
+  const isMe=userId===ME.id;
+  const name=profile?.name||'Usuário';
+  const handle=profile?.handle||name.toLowerCase().replace(/\s+/g,'_');
+  if(posts?.length){
+    const ids=posts.map(p=>p.id);
+    const[lr,cr,mlr]=await Promise.all([
+      sb.from('likes').select('post_id').in('post_id',ids),
+      sb.from('comments').select('post_id').in('post_id',ids),
+      sb.from('likes').select('post_id').eq('user_id',ME.id).in('post_id',ids)
+    ]);
+    const lm={},cm={};
+    (lr.data||[]).forEach(r=>{lm[r.post_id]=(lm[r.post_id]||0)+1;});
+    (cr.data||[]).forEach(r=>{cm[r.post_id]=(cm[r.post_id]||0)+1;});
+    const ls=new Set((mlr.data||[]).map(r=>r.post_id));
+    posts.forEach(p=>{p._likes=lm[p.id]||0;p._comments=cm[p.id]||0;p._liked=ls.has(p.id);p.profiles=profile;});
+    if(isMe)POSTS=posts;
+  }
+  document.getElementById('profileContent').innerHTML=`
+    <div class="page-header">
+      <button class="page-back-btn" onclick="goPage('feed',document.getElementById('navFeed'))">←</button>
+      <div>
+        <div class="page-title">${esc(name)}</div>
+        <div class="page-subtitle">${posts?.length||0} posts</div>
+      </div>
+    </div>
+    <div class="profile-banner"></div>
+    <div class="profile-header">
+      <div class="profile-actions">
+        <div class="av av-72" style="${avS(userId)};border:4px solid var(--bg);margin-top:-40px;">${name.slice(0,2).toUpperCase()}</div>
+        ${isMe
+          ?`<button class="btn-edit-profile" onclick="openEditModal()">Editar perfil</button>`
+          :`<button class="btn-follow-profile ${amF?'following':''}" id="fp-${userId}" onclick="toggleFollow('${userId}',this)">${amF?'Seguindo':'Seguir'}</button>`
+        }
+      </div>
+      <div class="profile-name">
+        ${esc(name)}
+        ${profile?.verified?'<span class="badge-v">✦</span>':''}
+        ${profile?.is_admin?'<span class="badge-admin">Admin</span>':''}
+      </div>
+      <div class="profile-handle">@${esc(handle)}</div>
+      ${profile?.bio?`<div class="profile-bio">${esc(profile.bio)}</div>`:''}
+      <div class="profile-stats">
+        <div class="p-stat" onclick="showFollowModal('${userId}','followers')">
+          <span class="p-stat-num">${frs?.length||0}</span>
+          <span class="p-stat-lbl">Seguidores</span>
+        </div>
+        <div class="p-stat" onclick="showFollowModal('${userId}','following')">
+          <span class="p-stat-num">${fing?.length||0}</span>
+          <span class="p-stat-lbl">Seguindo</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      ${posts?.length?posts.map(postHTML).join(''):'<div class="empty"><div class="empty-icon">📝</div>Nenhum post ainda.</div>'}
+    </div>`;
+}
+
+function openEditModal(){
+  document.getElementById('editName').value=MY_PROFILE?.name||'';
+  document.getElementById('editHandle').value=MY_PROFILE?.handle||'';
+  document.getElementById('editBio').value=MY_PROFILE?.bio||'';
+  openModal('editModal');
+}
+async function saveProfile(){
+  const name=document.getElementById('editName').value.trim();
+  const handle=document.getElementById('editHandle').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const bio=document.getElementById('editBio').value.trim();
+  if(!name)return toast('Digite um nome');
+  const{error}=await sb.from('profiles').upsert({id:ME.id,name,handle,bio});
+  if(error)return toast('Erro: '+error.message);
+  MY_PROFILE={...MY_PROFILE,name,handle,bio};
+  updateNavUI();closeModal('editModal');toast('Perfil atualizado ✓');openProfile(ME.id);
+}
+
+// ── SEGUIR ──
+async function toggleFollow(targetId,btn){
+  const f=btn.classList.contains('following');
+  if(f){
+    await sb.from('follows').delete().eq('follower_id',ME.id).eq('following_id',targetId);
+    btn.classList.remove('following');btn.textContent='Seguir';toast('Deixou de seguir');
+  }else{
+    const{error}=await sb.from('follows').insert({follower_id:ME.id,following_id:targetId});if(error)return;
+    btn.classList.add('following');btn.textContent='Seguindo';toast('Seguindo! ✓');
+    sb.from('notifications').insert({user_id:targetId,from_user_id:ME.id,type:'follow'}).catch(()=>{});
+  }
+  loadWhoToFollow();
+}
+
+async function showFollowModal(userId,type){
+  const field=type==='followers'?'follower_id':'following_id';
+  const other=type==='followers'?'following_id':'follower_id';
+  const{data:rows}=await sb.from('follows').select(field).eq(other,userId);
+  const ids=(rows||[]).map(r=>r[field]);
+  if(!ids.length){toast(type==='followers'?'Sem seguidores ainda':'Não segue ninguém ainda');return;}
+  const{data:profiles}=await sb.from('profiles').select('*').in('id',ids);
+  document.getElementById('commentModalTitle').textContent=type==='followers'?'Seguidores':'Seguindo';
+  document.getElementById('modalPostContent').innerHTML='';
+  document.getElementById('commentsContainer').innerHTML=(profiles||[]).map(p=>{
+    const n=p.name||'Usuário';
+    return`<div class="comment-item" style="cursor:pointer;" onclick="closeModal('commentModal');openProfile('${p.id}')">
+      <div class="av av-34" style="${avS(p.id)}">${n.slice(0,2).toUpperCase()}</div>
+      <div class="comment-body"><div class="comment-author">${esc(n)} ${p.verified?'<span style="color:var(--gold)">✦</span>':''}</div><div class="comment-txt">@${esc(p.handle||n)}</div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('commentInputRow').style.display='none';
+  openModal('commentModal');
+}
+
+async function loadFollowingPage(){
+  document.getElementById('followingList').innerHTML='<div class="spinner"></div>';
+  const{data:f}=await sb.from('follows').select('following_id').eq('follower_id',ME.id);
+  if(!f?.length){document.getElementById('followingList').innerHTML='<div class="empty"><div class="empty-icon">👥</div>Você ainda não segue ninguém.</div>';return;}
+  const{data:profiles}=await sb.from('profiles').select('*').in('id',f.map(x=>x.following_id));
+  document.getElementById('followingList').innerHTML=(profiles||[]).map(p=>{
+    const n=p.name||'Usuário';
+    return`<div class="follow-card" onclick="openProfile('${p.id}')">
+      <div class="av av-40" style="${avS(p.id)}">${n.slice(0,2).toUpperCase()}</div>
+      <div style="flex:1"><div style="font-weight:700">${esc(n)} ${p.verified?'<span style="color:var(--gold)">✦</span>':''}</div><div style="font-size:13px;color:var(--muted)">@${esc(p.handle||n)}</div></div>
+      <button class="btn-follow-profile following" onclick="event.stopPropagation();toggleFollow('${p.id}',this)">Seguindo</button>
+    </div>`;
+  }).join('');
+}
+
+// ── NOTIFICAÇÕES ──
+async function loadUnread(){
+  const{count}=await sb.from('notifications').select('*',{count:'exact',head:true}).eq('user_id',ME.id).eq('read',false);
+  const dot=document.getElementById('notifDot');
+  const bdot=document.getElementById('bnNotifDot');
+  if(count>0){dot.classList.add('show');if(bdot)bdot.classList.add('show');}
+  else{dot.classList.remove('show');if(bdot)bdot.classList.remove('show');}
+}
+async function markRead(){
+  await sb.from('notifications').update({read:true}).eq('user_id',ME.id).eq('read',false);
+  document.getElementById('notifDot').classList.remove('show');
+  const b=document.getElementById('bnNotifDot');if(b)b.classList.remove('show');
+}
+async function loadNotifs(){
+  document.getElementById('notifList').innerHTML='<div class="spinner"></div>';
+  const{data,error}=await sb.from('notifications').select('*,profiles!notifications_from_user_id_fkey(name)').eq('user_id',ME.id).order('id',{ascending:false}).limit(50);
+  if(error||!data?.length){document.getElementById('notifList').innerHTML='<div class="empty"><div class="empty-icon">🔔</div>Nenhuma notificação ainda.</div>';return;}
+  const icons={like:'❤️',comment:'💬',follow:'👤'};
+  const texts={like:n=>`<b>${esc(n)}</b> curtiu seu post`,comment:n=>`<b>${esc(n)}</b> comentou no seu post`,follow:n=>`<b>${esc(n)}</b> começou a te seguir`};
+  document.getElementById('notifList').innerHTML=data.map(n=>{
+    const name=n.profiles?.name||'Alguém';
+    return`<div class="notif-card ${n.read?'':'unread'}" onclick="${n.post_id?`openComments(${n.post_id})`:`openProfile('${n.from_user_id}')`}">
+      <div class="notif-icon">${icons[n.type]||'🔔'}</div>
+      <div><div class="notif-text">${texts[n.type]?texts[n.type](name):esc(name)+' interagiu'}</div><div class="notif-time">${ago(n.created_at)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── QUEM SEGUIR ──
+async function loadWhoToFollow(){
+  const{data:already}=await sb.from('follows').select('following_id').eq('follower_id',ME.id);
+  const skip=new Set([ME.id,...(already||[]).map(f=>f.following_id)]);
+  const{data:profiles}=await sb.from('profiles').select('*').limit(20);
+  const list=(profiles||[]).filter(p=>!skip.has(p.id)).slice(0,4);
+  const container=document.getElementById('whoFollow');
+  if(!list.length){container.innerHTML='<div style="padding:10px 16px;font-size:13px;color:var(--muted);">Você segue todos! 🎉</div>';return;}
+  container.innerHTML=list.map(p=>{
+    const n=p.name||'Usuário';
+    return`<div class="person-row" onclick="openProfile('${p.id}')">
+      <div class="av av-40" style="${avS(p.id)}">${n.slice(0,2).toUpperCase()}</div>
+      <div class="person-info">
+        <div class="person-name">${esc(n)} ${p.verified?'<span style="color:var(--gold);font-size:11px">✦</span>':''}</div>
+        <div class="person-handle">@${esc(p.handle||n.toLowerCase())}</div>
+      </div>
+      <button class="btn-follow-sm" onclick="event.stopPropagation();quickFollow('${p.id}',this)">Seguir</button>
+    </div>`;
+  }).join('');
+  container.innerHTML+=`<button class="widget-more">Mostrar mais</button>`;
+}
+async function quickFollow(id,btn){
+  const{error}=await sb.from('follows').insert({follower_id:ME.id,following_id:id});if(error)return;
+  sb.from('notifications').insert({user_id:id,from_user_id:ME.id,type:'follow'}).catch(()=>{});
+  btn.textContent='✓';btn.disabled=true;btn.classList.add('following');
+  toast('Seguindo! ✓');setTimeout(loadWhoToFollow,800);
+}
+
+// ── STATS ──
+async function loadStats(){
+  const[{count:pc},{count:uc}]=await Promise.all([
+    sb.from('posts').select('*',{count:'exact',head:true}),
+    sb.from('profiles').select('*',{count:'exact',head:true})
+  ]);
+  if(pc!=null)document.getElementById('trendCount').textContent=pc+' posts na community';
+}
+
+// ── PESQUISA ──
+let _st;
+function handleSearch(){
+  clearTimeout(_st);
+  const q=document.getElementById('searchInput').value.trim().toLowerCase();
+  const drop=document.getElementById('searchDrop');
+  if(!q){drop.classList.remove('open');return;}
+  _st=setTimeout(async()=>{
+    const{data:users}=await sb.from('profiles').select('*').ilike('name',`%${q}%`).limit(5);
+    const postRes=POSTS.filter(p=>(p.text||'').toLowerCase().includes(q)).slice(0,3);
+    if(!users?.length&&!postRes.length){drop.classList.remove('open');return;}
+    drop.classList.add('open');
+    drop.innerHTML=[
+      ...(users||[]).map(u=>`<div class="search-result-item" onclick="document.getElementById('searchDrop').classList.remove('open');openProfile('${u.id}')">
+        <div class="av av-34" style="${avS(u.id)}">${(u.name||'?').slice(0,2).toUpperCase()}</div>
+        <div><div style="font-size:14px;font-weight:700">${esc(u.name||'?')}</div><div style="font-size:12px;color:var(--muted)">@${esc(u.handle||'')}</div></div>
+      </div>`),
+      ...postRes.map(p=>`<div class="search-result-item" onclick="document.getElementById('searchDrop').classList.remove('open');openComments(${p.id})">
+        <div style="width:34px;text-align:center;font-size:16px">💬</div>
+        <div style="font-size:13px;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc((p.text||'').slice(0,50))}</div>
+      </div>`)
+    ].join('');
+  },300);
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.search-input-wrap'))document.getElementById('searchDrop').classList.remove('open');});
+
+// ── ADMIN ──
+async function loadAdmin(){
+  if(!isAdmin())return;
+  document.getElementById('adminContent').innerHTML='<div class="spinner"></div>';
+  const[{data:allPosts},{data:allUsers},{count:lc},{count:cc}]=await Promise.all([
+    sb.from('posts').select('*').order('id',{ascending:false}),
+    sb.from('profiles').select('*'),
+    sb.from('likes').select('*',{count:'exact',head:true}),
+    sb.from('comments').select('*',{count:'exact',head:true})
+  ]);
+
+  // Get profiles for posts
+  const uids=[...new Set((allPosts||[]).map(p=>p.user_id))];
+  const{data:profs}=await sb.from('profiles').select('id,name').in('id',uids);
+  const pm={};(profs||[]).forEach(p=>{pm[p.id]=p;});
+
+  document.getElementById('adminContent').innerHTML=`
+    <div class="admin-stats-grid">
+      <div class="admin-stat-card"><div class="admin-stat-n" style="color:var(--gold)">${allPosts?.length||0}</div><div class="admin-stat-l">Posts</div></div>
+      <div class="admin-stat-card"><div class="admin-stat-n" style="color:var(--blue)">${allUsers?.length||0}</div><div class="admin-stat-l">Usuários</div></div>
+      <div class="admin-stat-card"><div class="admin-stat-n" style="color:var(--red)">${lc||0}</div><div class="admin-stat-l">Curtidas</div></div>
+      <div class="admin-stat-card"><div class="admin-stat-n" style="color:var(--green)">${cc||0}</div><div class="admin-stat-l">Comentários</div></div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-card-title">📝 Posts</div>
+      <div class="tbl-overflow"><table class="tbl">
+        <thead><tr><th>Usuário</th><th>Texto</th><th>Data</th><th>Pin</th><th>Ações</th></tr></thead>
+        <tbody>${(allPosts||[]).map(p=>`<tr>
+          <td style="font-weight:600">${esc(pm[p.user_id]?.name||'?')}</td>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${esc(p.text||'(imagem)')}</td>
+          <td style="color:var(--muted);white-space:nowrap">${ago(p.created_at)}</td>
+          <td>${p.is_pinned?'📌':'-'}</td>
+          <td>
+            <button class="btn-sm" onclick="adminPin(${p.id},${p.is_pinned})">${p.is_pinned?'Desafixar':'Fixar'}</button>
+            <button class="btn-danger" onclick="adminDel(${p.id})">Deletar</button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-card-title">👥 Usuários</div>
+      <div class="tbl-overflow"><table class="tbl">
+        <thead><tr><th>Nome</th><th>Handle</th><th>Admin</th><th>Verif.</th><th>Ações</th></tr></thead>
+        <tbody>${(allUsers||[]).map(u=>`<tr>
+          <td style="cursor:pointer;font-weight:600" onclick="openProfile('${u.id}')">${esc(u.name||'?')}</td>
+          <td style="color:var(--muted)">@${esc(u.handle||'')}</td>
+          <td>${u.is_admin?'✅':'-'}</td>
+          <td>${u.verified?'✦':'-'}</td>
+          <td>
+            <button class="btn-sm" onclick="adminVerify('${u.id}',${u.verified})">${u.verified?'Desverif.':'Verificar ✦'}</button>
+            ${u.id!==ME.id?`<button class="btn-sm" onclick="adminMkAdmin('${u.id}',${u.is_admin})">${u.is_admin?'Rem. Admin':'+ Admin'}</button>`:'<span style="font-size:11px;color:var(--muted)">Você</span>'}
+          </td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>`;
+}
+
+async function adminDel(id){if(!confirm('Deletar?'))return;await sb.from('likes').delete().eq('post_id',id);await sb.from('comments').delete().eq('post_id',id);await sb.from('posts').delete().eq('id',id);toast('Deletado');loadAdmin();loadPosts();}
+async function adminPin(id,p){await sb.from('posts').update({is_pinned:!p}).eq('id',id);toast(p?'Desafixado':'Fixado! 📌');loadAdmin();loadPosts();}
+async function adminVerify(id,v){await sb.from('profiles').update({verified:!v}).eq('id',id);toast(v?'Verificação removida':'Verificado ✦');loadAdmin();}
+async function adminMkAdmin(id,a){await sb.from('profiles').update({is_admin:!a}).eq('id',id);toast(a?'Admin removido':'Agora é admin');loadAdmin();}
+
+init();
+</script>
+</body>
+</html>
