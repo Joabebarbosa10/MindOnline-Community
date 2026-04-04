@@ -529,38 +529,6 @@ input,textarea{font-family:var(--body);}
   .fab{display:flex;}
   #appWrap{grid-template-columns:1fr;}
 }
-
-/* ══ FILL GAPS + MOBILE POLISH ══ */
-.main-feed { min-height: 100vh; }
-#postsArea { min-height: 400px; }
-.notif-card .av-img { width:100%;height:100%;border-radius:50%;object-fit:cover; }
-
-/* Mobile search overlay */
-#mobileSearchOverlay { display:none; }
-#mobileSearchOverlay input { border:none; }
-#mobileSearchOverlay input:focus { border:none;outline:none; }
-
-/* Mobile menu sheet animation */
-#mobileMenuSheet { transition: opacity .2s; }
-
-/* Skeleton pulse animation */
-@keyframes skelPulse { 0%,100%{opacity:.4}50%{opacity:.7} }
-.skel { animation: skelPulse 1.4s ease-in-out infinite; }
-
-/* Fix white gaps in sidebar */
-.right-sidebar { padding-bottom: 20px; }
-.widget:last-child { margin-bottom: 0; }
-
-/* Better mobile bottom nav */
-@media (max-width: 768px) {
-  .left-sidebar { display: flex; }
-  #appWrap { grid-template-columns: 68px 1fr; }
-}
-@media (max-width: 500px) {
-  .left-sidebar { display: none !important; }
-  #appWrap { grid-template-columns: 1fr !important; }
-}
-
 </style>
 </head>
 <body>
@@ -652,7 +620,7 @@ input,textarea{font-family:var(--body);}
 
     <button class="ls-compose-btn" onclick="openComposeModal()">Publicar</button>
 
-    <button class="ls-profile-btn" onclick="window.innerWidth<=768?openMobileMenu():goPage('myprofile',document.getElementById('navProfile'))">
+    <button class="ls-profile-btn" onclick="goPage('myprofile',document.getElementById('navProfile'))">
       <div class="av av-40" id="lsAvatar" style="background:rgba(245,200,66,.2);color:var(--gold);">?</div>
       <div class="ls-profile-info">
         <div class="ls-profile-name" id="lsName">—</div>
@@ -794,7 +762,7 @@ input,textarea{font-family:var(--body);}
       <span class="bn-icon">🔔</span>
       <span class="bn-badge" id="bnNotifDot"></span>
     </button>
-    <button class="bn-item" id="bnSearch" onclick="openMobileSearch()">
+    <button class="bn-item" id="bnSearch" onclick="toggleMobileSearch()">
       <span class="bn-icon">🔍</span>
     </button>
     <button class="bn-item" id="bnProfile" onclick="goPage('myprofile',document.getElementById('navProfile'));setBnActive(this)">
@@ -988,12 +956,10 @@ async function init(){
       ME=session.user;await fetchProfile();
       if(!MY_PROFILE){
         const name=ME.user_metadata?.full_name||ME.email.split('@')[0];
-        const handle=name.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/^_+|_+$/g,'').slice(0,20)||'usuario';
-        // Grab Google profile picture automatically
-        const avatar_url=ME.user_metadata?.avatar_url||ME.user_metadata?.picture||null;
+        const handle=name.toLowerCase().replace(/[^a-z0-9]/g,'_');
+        const avatar_url=ME.user_metadata?.avatar_url||null;
         await sb.from('profiles').upsert({id:ME.id,name,handle,avatar_url});
         await fetchProfile();
-        toast('Bem-vindo, '+name+'! 👋');
       }
       startApp();
     }
@@ -1001,17 +967,10 @@ async function init(){
 }
 
 function showContinue(){
-  const name=MY_PROFILE?.name||ME.user_metadata?.full_name||ME.email.split('@')[0];
+  const name=MY_PROFILE?.name||ME.email.split('@')[0];
   const av=document.getElementById('contAv');
-  // Try Google avatar first, then profile avatar, then initials
-  const avatarUrl=MY_PROFILE?.avatar_url||ME.user_metadata?.avatar_url||null;
-  if(avatarUrl){
-    av.innerHTML=`<img class="av-img" src="${avatarUrl}" onerror="this.parentElement.textContent='${name.slice(0,2).toUpperCase()}'">`;
-    av.style.cssText='overflow:hidden;background:var(--bg3);';
-  } else {
-    av.textContent=name.slice(0,2).toUpperCase();
-    av.style.cssText=avS(ME.id);
-  }
+  if(MY_PROFILE?.avatar_url){av.innerHTML=`<img class="av-img" src="${MY_PROFILE.avatar_url}">`;av.style.cssText='overflow:hidden;background:var(--bg3);';}
+  else{av.textContent=name.slice(0,2).toUpperCase();}
   document.getElementById('contName').textContent=name;
   document.getElementById('contEmail').textContent=ME.email;
   document.getElementById('continueSection').style.display='block';
@@ -1055,14 +1014,7 @@ async function doLogout(){
   document.getElementById('continueSection').style.display='none';
 }
 async function doLoginGoogle(){
-  const redirectTo = window.location.origin + window.location.pathname;
-  const{error}=await sb.auth.signInWithOAuth({
-    provider:'google',
-    options:{
-      redirectTo,
-      queryParams:{access_type:'offline',prompt:'consent'}
-    }
-  });
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
   if(error)toast('Erro Google: '+error.message);
 }
 function showForgotPassword(){
@@ -1115,15 +1067,10 @@ function updateNavUI(){
   }
   document.getElementById('lsName').textContent=myName();
   document.getElementById('lsHandle').textContent=myHandle();
-  // Admin visibility — only for admin users
-  const navAdmin=document.getElementById('navAdmin');
-  const bnAdmin=document.getElementById('bnAdmin');
   if(isAdmin()){
-    if(navAdmin)navAdmin.style.display='flex';
+    document.getElementById('navAdmin').style.display='flex';
+    const bnAdmin=document.getElementById('bnAdmin');
     if(bnAdmin)bnAdmin.style.display='flex';
-  } else {
-    if(navAdmin)navAdmin.style.display='none';
-    if(bnAdmin)bnAdmin.style.display='none';
   }
 }
 
@@ -1213,64 +1160,10 @@ function setBnActive(btn){
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
-function openMobileSearch(){
-  const overlay=document.getElementById('mobileSearchOverlay');
-  if(overlay){overlay.style.display='flex';setTimeout(()=>document.getElementById('mobileSearchInput')?.focus(),100);}
+function toggleMobileSearch(){
+  const inp=document.getElementById('searchInput');
+  if(inp)inp.focus();
 }
-function closeMobileSearch(){
-  const overlay=document.getElementById('mobileSearchOverlay');
-  if(overlay)overlay.style.display='none';
-  document.getElementById('mobileSearchResults').innerHTML='<div class="empty" style="padding:40px 24px;"><div class="empty-icon">🔍</div>Pesquise por pessoas ou posts</div>';
-  if(document.getElementById('mobileSearchInput'))document.getElementById('mobileSearchInput').value='';
-}
-
-let _mst;
-async function handleMobileSearch(){
-  clearTimeout(_mst);
-  const q=(document.getElementById('mobileSearchInput')?.value||'').trim().toLowerCase();
-  const res=document.getElementById('mobileSearchResults');
-  if(!q){
-    res.innerHTML='<div class="empty" style="padding:40px 24px;"><div class="empty-icon">🔍</div>Pesquise por pessoas ou posts</div>';
-    return;
-  }
-  res.innerHTML='<div class="spinner"></div>';
-  _mst=setTimeout(async()=>{
-    const[{data:users},{data:posts}]=await Promise.all([
-      sb.from('profiles').select('*').ilike('name',`%${q}%`).limit(8),
-      sb.from('posts').select('*').ilike('text',`%${q}%`).order('id',{ascending:false}).limit(6)
-    ]);
-    if(!users?.length&&!posts?.length){
-      res.innerHTML='<div class="empty" style="padding:40px 24px;"><div class="empty-icon">😔</div>Nenhum resultado para "'+esc(q)+'"</div>';
-      return;
-    }
-    let html='';
-    if(users?.length){
-      html+='<div style="padding:10px 16px 4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;">Pessoas</div>';
-      html+=users.map(u=>{
-        const n=u.name||'Usuário';
-        const avC=u.avatar_url?`<img class="av-img" src="${u.avatar_url}">`:(n.slice(0,2).toUpperCase());
-        const avSt=u.avatar_url?'background:var(--bg3);overflow:hidden;':avS(u.id);
-        return`<div class="search-result-item" style="padding:12px 16px;" onclick="closeMobileSearch();openProfile('${u.id}')">
-          <div class="av av-40" style="${avSt}">${avC}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:15px;font-weight:700;">${esc(n)} ${u.verified?'<span style="color:var(--gold)">✦</span>':''}</div>
-            <div style="font-size:13px;color:var(--muted);">@${esc(u.handle||n)}</div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-    if(posts?.length){
-      html+='<div style="padding:10px 16px 4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;">Posts</div>';
-      html+=posts.map(p=>`<div class="search-result-item" style="padding:12px 16px;" onclick="closeMobileSearch();openComments(${p.id})">
-        <div style="width:40px;text-align:center;font-size:20px;flex-shrink:0;">💬</div>
-        <div style="font-size:14px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc((p.text||'').slice(0,80))}</div>
-      </div>`).join('');
-    }
-    res.innerHTML=html;
-  },280);
-}
-
-function toggleMobileSearch(){openMobileSearch();}
 
 // ── FEED ──
 function switchFeed(mode){
@@ -1288,18 +1181,7 @@ function renderFeed(){
 }
 
 async function loadPosts(){
-  document.getElementById('postsArea').innerHTML=`
-  <div style="padding:20px;">
-    ${[1,2,3].map(()=>`
-    <div style="display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--border);opacity:.4;">
-      <div style="width:40px;height:40px;border-radius:50%;background:var(--bg3);flex-shrink:0;"></div>
-      <div style="flex:1;">
-        <div style="height:12px;background:var(--bg3);border-radius:6px;width:40%;margin-bottom:8px;"></div>
-        <div style="height:12px;background:var(--bg3);border-radius:6px;width:90%;margin-bottom:6px;"></div>
-        <div style="height:12px;background:var(--bg3);border-radius:6px;width:70%;"></div>
-      </div>
-    </div>`).join('')}
-  </div>`;
+  document.getElementById('postsArea').innerHTML='<div class="spinner"></div>';
   const{data:posts,error}=await sb.from('posts').select('*').order('is_pinned',{ascending:false}).order('id',{ascending:false});
   if(error){document.getElementById('postsArea').innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div>Erro: ${error.message}</div>`;return;}
   if(!posts?.length){document.getElementById('postsArea').innerHTML='<div class="empty"><div class="empty-icon">✏️</div>Nenhum post ainda. Seja o primeiro!</div>';POSTS=[];return;}
@@ -1331,7 +1213,7 @@ async function enrichAndCache(posts){
   (cr.data||[]).forEach(r=>{cm[r.post_id]=(cm[r.post_id]||0)+1;});
   (pr.data||[]).forEach(r=>{pm[r.id]=r;});
   const ls=new Set((mlr.data||[]).map(r=>r.post_id));
-  POSTS=posts.map(p=>({...p,profiles:pm[p.user_id]||{id:p.user_id,name:'Usuário',handle:'usuario',verified:false,is_admin:false,avatar_url:null},_likes:lm[p.id]||0,_comments:cm[p.id]||0,_liked:ls.has(p.id)}));
+  POSTS=posts.map(p=>({...p,profiles:pm[p.user_id]||null,_likes:lm[p.id]||0,_comments:cm[p.id]||0,_liked:ls.has(p.id)}));
 }
 
 function renderPosts(list,container){
@@ -1722,22 +1604,14 @@ async function markRead(){
 
 async function loadNotifs(){
   document.getElementById('notifList').innerHTML='<div class="spinner"></div>';
-  // Fetch notifications without join (more reliable across all Supabase configs)
-  const{data:rawNotifs,error}=await sb.from('notifications')
-    .select('*')
+  const{data,error}=await sb.from('notifications')
+    .select('*,profiles!notifications_from_user_id_fkey(name,avatar_url)')
     .eq('user_id',ME.id)
     .order('id',{ascending:false})
     .limit(60);
-  if(error||!rawNotifs?.length){
+  if(error||!data?.length){
     document.getElementById('notifList').innerHTML='<div class="empty"><div class="empty-icon">🔔</div>Nenhuma notificação ainda.<br>Interaja com a comunidade!</div>';return;
   }
-  // Fetch sender profiles separately
-  const senderIds=[...new Set(rawNotifs.map(n=>n.from_user_id).filter(Boolean))];
-  const{data:senderProfs}=senderIds.length
-    ? await sb.from('profiles').select('id,name,avatar_url').in('id',senderIds)
-    : {data:[]};
-  const senderMap={};(senderProfs||[]).forEach(p=>{senderMap[p.id]=p;});
-  const data=rawNotifs.map(n=>({...n,_sender:senderMap[n.from_user_id]||null}));
 
   const icons={
     like:'❤️', comment:'💬', follow:'👤',
@@ -1757,7 +1631,7 @@ async function loadNotifs(){
   })[n.type]||`<b>${esc(name)}</b> interagiu com você`;
 
   document.getElementById('notifList').innerHTML=data.map(n=>{
-    const prof=n._sender;
+    const prof=n.profiles;
     const name=prof?.name||'Alguém';
     const avC=prof?.avatar_url?`<img class="av-img" src="${prof.avatar_url}">`:(icons[n.type]||'🔔');
     const avSt=prof?.avatar_url?'background:var(--bg3);overflow:hidden;':'';
@@ -1803,76 +1677,13 @@ async function quickFollow(id,btn){
   toast('Seguindo! ✓');setTimeout(loadWhoToFollow,800);
 }
 
-// ── STATS + TENDÊNCIAS DINÂMICAS ──
+// ── STATS ──
 async function loadStats(){
-  await loadTrends();
-}
-
-async function loadTrends(){
-  const container=document.getElementById('trendsWidget');
-  if(!container)return;
-
-  // Fetch real data in parallel
-  const[
-    {count:postCount},
-    {count:userCount},
-    {data:recentPosts}
-  ]=await Promise.all([
+  const[{count:pc},{count:uc}]=await Promise.all([
     sb.from('posts').select('*',{count:'exact',head:true}),
-    sb.from('profiles').select('*',{count:'exact',head:true}),
-    sb.from('posts').select('text,created_at').order('id',{ascending:false}).limit(100)
+    sb.from('profiles').select('*',{count:'exact',head:true})
   ]);
-
-  // Extract hashtags from recent posts
-  const hashtagMap={};
-  (recentPosts||[]).forEach(p=>{
-    const matches=(p.text||'').match(/#[\w\u00C0-\u017F]+/g)||[];
-    matches.forEach(tag=>{
-      const t=tag.toLowerCase();
-      hashtagMap[t]=(hashtagMap[t]||0)+1;
-    });
-  });
-
-  // Sort hashtags by frequency
-  const topTags=Object.entries(hashtagMap)
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,5);
-
-  // Build trends HTML
-  let trendsHTML='';
-
-  // Community stat row
-  trendsHTML+=`<div class="trend-row" onclick="switchFeed('pv');goPage('feed',document.getElementById('navFeed'))">
-    <div class="trend-cat">MindOnline · Community</div>
-    <div class="trend-tag">#ComunicacaoEtica</div>
-    <div class="trend-cnt">${postCount||0} posts · ${userCount||0} membros</div>
-  </div>`;
-
-  // Dynamic hashtag rows
-  if(topTags.length){
-    topTags.forEach(([tag,count])=>{
-      trendsHTML+=`<div class="trend-row">
-        <div class="trend-cat">Em alta</div>
-        <div class="trend-tag">${esc(tag)}</div>
-        <div class="trend-cnt">${count} post${count>1?'s':''}</div>
-      </div>`;
-    });
-  } else {
-    // Fallback static trends
-    [
-      ['Tecnologia','#IA','Em alta'],
-      ['Petrolina, PE','#EREMCC','Local'],
-      ['Bem-estar','#SaudeMental','Em alta'],
-    ].forEach(([cat,tag,label])=>{
-      trendsHTML+=`<div class="trend-row">
-        <div class="trend-cat">${cat}</div>
-        <div class="trend-tag">${tag}</div>
-        <div class="trend-cnt">${label}</div>
-      </div>`;
-    });
-  }
-
-  container.innerHTML=trendsHTML;
+  if(pc!=null)document.getElementById('trendCount').textContent=pc+' posts na community';
 }
 
 // ── PESQUISA ──
@@ -2029,62 +1840,7 @@ async function adminMkAdmin(id,a){
   loadAdmin();
 }
 
-function openMobileMenu(){
-  const sheet=document.getElementById('mobileMenuSheet');
-  if(!sheet)return;
-  document.getElementById('menuSheetName').textContent=myName();
-  document.getElementById('menuSheetHandle').textContent=myHandle();
-  sheet.style.display='flex';
-  sheet.style.flexDirection='column';
-  sheet.style.justifyContent='flex-end';
-}
-function closeMobileMenu(){
-  const sheet=document.getElementById('mobileMenuSheet');
-  if(sheet)sheet.style.display='none';
-}
-
 init();
 </script>
-
-<!-- MOBILE SEARCH OVERLAY -->
-<div id="mobileSearchOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:400;flex-direction:column;">
-  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);">
-    <button onclick="closeMobileSearch()" style="background:none;border:none;color:var(--white);font-size:22px;cursor:pointer;padding:4px;">←</button>
-    <input id="mobileSearchInput" type="text" placeholder="Pesquisar pessoas e posts..."
-      style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:9999px;
-      padding:10px 16px;color:var(--white);font-size:15px;outline:none;font-family:var(--body);"
-      oninput="handleMobileSearch()" autocomplete="off">
-  </div>
-  <div id="mobileSearchResults" style="flex:1;overflow-y:auto;padding:8px 0;">
-    <div class="empty" style="padding:40px 24px;">
-      <div class="empty-icon">🔍</div>
-      Pesquise por pessoas ou posts
-    </div>
-  </div>
-</div>
-
-<!-- MOBILE LOGOUT SHEET -->
-<div id="mobileMenuSheet" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:450;backdrop-filter:blur(4px);" onclick="if(event.target===this)closeMobileMenu()">
-  <div style="position:absolute;bottom:0;left:0;right:0;background:var(--bg2);border-radius:20px 20px 0 0;padding:8px 0 32px;border-top:1px solid var(--border);">
-    <div style="width:36px;height:4px;background:var(--border);border-radius:999px;margin:8px auto 16px;"></div>
-    <div style="padding:0 20px;">
-      <div style="font-family:var(--title);font-size:17px;font-weight:800;margin-bottom:4px;" id="menuSheetName">—</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;" id="menuSheetHandle">—</div>
-    </div>
-    <button onclick="goPage('myprofile',document.getElementById('navProfile'));closeMobileMenu()" 
-      style="width:100%;padding:14px 20px;background:none;border:none;color:var(--white);font-size:15px;font-weight:500;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:var(--body);">
-      <span style="font-size:20px;">👤</span> Ver perfil
-    </button>
-    <button onclick="openModal('editModal');closeMobileMenu()" 
-      style="width:100%;padding:14px 20px;background:none;border:none;color:var(--white);font-size:15px;font-weight:500;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:var(--body);">
-      <span style="font-size:20px;">✏️</span> Editar perfil
-    </button>
-    <div style="height:1px;background:var(--border);margin:8px 20px;"></div>
-    <button onclick="doLogout();closeMobileMenu()" 
-      style="width:100%;padding:14px 20px;background:none;border:none;color:var(--red);font-size:15px;font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:var(--body);">
-      <span style="font-size:20px;">🚪</span> Sair
-    </button>
-  </div>
-</div>
 </body>
 </html>
