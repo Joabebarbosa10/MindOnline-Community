@@ -520,7 +520,6 @@ input,textarea{font-family:var(--body);}
   .auth-split{grid-template-columns:1fr;}
   .auth-left{display:none;}
   .auth-right{padding:40px 24px;max-width:100%;}
-  .bn-admin{display:flex!important;}
 }
 @media(max-width:600px){
   :root{--ls-w:0px;}
@@ -529,6 +528,71 @@ input,textarea{font-family:var(--body);}
   .fab{display:flex;}
   #appWrap{grid-template-columns:1fr;}
 }
+
+/* ══ FILL GAPS + MOBILE POLISH ══ */
+.main-feed { min-height: 100vh; }
+#postsArea { min-height: 400px; }
+.notif-card .av-img { width:100%;height:100%;border-radius:50%;object-fit:cover; }
+
+/* Mobile search overlay */
+#mobileSearchOverlay { display:none; }
+#mobileSearchOverlay input { border:none; }
+#mobileSearchOverlay input:focus { border:none;outline:none; }
+
+/* Mobile menu sheet animation */
+#mobileMenuSheet { transition: opacity .2s; }
+
+/* Skeleton pulse animation */
+@keyframes skelPulse { 0%,100%{opacity:.4}50%{opacity:.7} }
+.skel { animation: skelPulse 1.4s ease-in-out infinite; }
+
+/* Fix white gaps in sidebar */
+.right-sidebar { padding-bottom: 20px; }
+.widget:last-child { margin-bottom: 0; }
+
+/* Better mobile bottom nav */
+@media (max-width: 768px) {
+  .left-sidebar { display: flex; }
+  #appWrap { grid-template-columns: 68px 1fr; }
+}
+@media (max-width: 500px) {
+  .left-sidebar { display: none !important; }
+  #appWrap { grid-template-columns: 1fr !important; }
+}
+
+
+/* ══ ABOUT BANNER MOBILE ══ */
+.mobile-about-bar {
+  display: none;
+  background: linear-gradient(135deg,rgba(245,200,66,.06) 0%,rgba(245,200,66,.02) 100%);
+  border-top: 1px solid rgba(245,200,66,.2);
+  padding: 20px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+@media (max-width: 1100px) {
+  .mobile-about-bar { display: block; }
+}
+@media (max-width: 768px) {
+  .mobile-about-bar { padding-bottom: 90px; }
+}
+
+
+/* ══ DENÚNCIAS ══ */
+.act-btn.report:hover { color: var(--red) !important; background: rgba(244,33,46,.1) !important; }
+.report-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(244,33,46,.12); color: var(--red);
+  font-size: 10px; font-weight: 700; padding: 2px 7px;
+  border-radius: 999px; border: 1px solid rgba(244,33,46,.2);
+}
+.admin-reports-count {
+  background: var(--red); color: #fff;
+  font-size: 10px; font-weight: 800; padding: 1px 6px;
+  border-radius: 999px; margin-left: 6px;
+}
+
 </style>
 </head>
 <body>
@@ -620,13 +684,13 @@ input,textarea{font-family:var(--body);}
 
     <button class="ls-compose-btn" onclick="openComposeModal()">Publicar</button>
 
-    <button class="ls-profile-btn" onclick="goPage('myprofile',document.getElementById('navProfile'))">
+    <button class="ls-profile-btn" onclick="window.innerWidth<=768?openMobileMenu():goPage('myprofile',document.getElementById('navProfile'))">
       <div class="av av-40" id="lsAvatar" style="background:rgba(245,200,66,.2);color:var(--gold);">?</div>
       <div class="ls-profile-info">
         <div class="ls-profile-name" id="lsName">—</div>
         <div class="ls-profile-handle" id="lsHandle">—</div>
       </div>
-      <span class="ls-profile-dots" onclick="event.stopPropagation();doLogout()">⇠ Sair</span>
+      <span class="ls-profile-dots" onclick="event.stopPropagation();doLogout()" title="Sair">⇠ Sair</span>
     </button>
   </aside>
 
@@ -745,11 +809,56 @@ input,textarea{font-family:var(--body);}
       <div id="whoFollow"><div class="spinner" style="margin:16px auto;width:20px;height:20px;"></div></div>
     </div>
 
-    <div style="font-size:12px;color:var(--muted);padding:8px 4px;line-height:1.9;">
-      <a href="index.html" style="color:var(--muted);">← MindOnline</a> · © 2026
+    <!-- WIDGET SOBRE O PROJETO — destaque total -->
+    <div style="background:linear-gradient(135deg,rgba(245,200,66,.12) 0%,rgba(245,200,66,.04) 100%);
+      border:1px solid rgba(245,200,66,.3);border-radius:16px;padding:18px;margin-bottom:14px;">
+      <div style="font-family:var(--title);font-size:16px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+        🧠 Sobre o MindOnline
+      </div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;">
+        Quer saber mais sobre nós e sobre o nosso projeto educacional?
+      </p>
+      <a href="https://mindonline.netlify.app" target="_blank" rel="noopener"
+        style="display:flex;align-items:center;justify-content:center;gap:8px;
+        width:100%;padding:11px;border-radius:10px;margin-bottom:8px;
+        background:var(--gold);color:#000;font-size:14px;font-weight:800;
+        text-decoration:none;transition:all .2s;"
+        onmouseover="this.style.background='var(--gold2)'"
+        onmouseout="this.style.background='var(--gold)'">
+        🌐 mindonline.netlify.app
+      </a>
+      <a href="privacidade.html" target="_blank"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;
+        width:100%;padding:9px;border-radius:10px;
+        background:rgba(255,255,255,.05);border:1px solid var(--border);
+        color:var(--muted);font-size:13px;font-weight:600;
+        text-decoration:none;transition:all .2s;"
+        onmouseover="this.style.color='var(--white)';this.style.borderColor='rgba(255,255,255,.2)'"
+        onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">
+        🔒 Política de Privacidade
+      </a>
+    </div>
+    <div style="font-size:11px;color:var(--muted);padding:4px 4px 20px;text-align:center;">
+      © 2026 EREMCC · Petrolina, PE
     </div>
   </aside>
 
+</div>
+
+<!-- ABOUT BAR (mobile / sem sidebar) -->
+<div class="mobile-about-bar">
+  <div style="font-weight:700;color:var(--white);margin-bottom:8px;">🧠 Sobre o MindOnline</div>
+  <a href="https://mindonline.netlify.app" target="_blank"
+    style="display:inline-flex;align-items:center;gap:6px;background:var(--gold);
+    color:#000;font-weight:800;font-size:13px;padding:8px 16px;border-radius:8px;
+    text-decoration:none;margin-bottom:8px;">
+    🌐 mindonline.netlify.app
+  </a>
+  <br>
+  <a href="privacidade.html" target="_blank"
+    style="font-size:12px;color:var(--muted);text-decoration:none;">
+    🔒 Política de Privacidade
+  </a>
 </div>
 
 <!-- MOBILE BOTTOM NAV -->
@@ -762,7 +871,7 @@ input,textarea{font-family:var(--body);}
       <span class="bn-icon">🔔</span>
       <span class="bn-badge" id="bnNotifDot"></span>
     </button>
-    <button class="bn-item" id="bnSearch" onclick="toggleMobileSearch()">
+    <button class="bn-item" id="bnSearch" onclick="openMobileSearch()">
       <span class="bn-icon">🔍</span>
     </button>
     <button class="bn-item" id="bnProfile" onclick="goPage('myprofile',document.getElementById('navProfile'));setBnActive(this)">
@@ -956,10 +1065,12 @@ async function init(){
       ME=session.user;await fetchProfile();
       if(!MY_PROFILE){
         const name=ME.user_metadata?.full_name||ME.email.split('@')[0];
-        const handle=name.toLowerCase().replace(/[^a-z0-9]/g,'_');
-        const avatar_url=ME.user_metadata?.avatar_url||null;
+        const handle=name.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/^_+|_+$/g,'').slice(0,20)||'usuario';
+        // Grab Google profile picture automatically
+        const avatar_url=ME.user_metadata?.avatar_url||ME.user_metadata?.picture||null;
         await sb.from('profiles').upsert({id:ME.id,name,handle,avatar_url});
         await fetchProfile();
+        toast('Bem-vindo, '+name+'! 👋');
       }
       startApp();
     }
@@ -967,10 +1078,17 @@ async function init(){
 }
 
 function showContinue(){
-  const name=MY_PROFILE?.name||ME.email.split('@')[0];
+  const name=MY_PROFILE?.name||ME.user_metadata?.full_name||ME.email.split('@')[0];
   const av=document.getElementById('contAv');
-  if(MY_PROFILE?.avatar_url){av.innerHTML=`<img class="av-img" src="${MY_PROFILE.avatar_url}">`;av.style.cssText='overflow:hidden;background:var(--bg3);';}
-  else{av.textContent=name.slice(0,2).toUpperCase();}
+  // Try Google avatar first, then profile avatar, then initials
+  const avatarUrl=MY_PROFILE?.avatar_url||ME.user_metadata?.avatar_url||null;
+  if(avatarUrl){
+    av.innerHTML=`<img class="av-img" src="${avatarUrl}" onerror="this.parentElement.textContent='${name.slice(0,2).toUpperCase()}'">`;
+    av.style.cssText='overflow:hidden;background:var(--bg3);';
+  } else {
+    av.textContent=name.slice(0,2).toUpperCase();
+    av.style.cssText=avS(ME.id);
+  }
   document.getElementById('contName').textContent=name;
   document.getElementById('contEmail').textContent=ME.email;
   document.getElementById('continueSection').style.display='block';
@@ -1014,7 +1132,14 @@ async function doLogout(){
   document.getElementById('continueSection').style.display='none';
 }
 async function doLoginGoogle(){
-  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+  const redirectTo = window.location.origin + window.location.pathname;
+  const{error}=await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{
+      redirectTo,
+      queryParams:{access_type:'offline',prompt:'consent'}
+    }
+  });
   if(error)toast('Erro Google: '+error.message);
 }
 function showForgotPassword(){
@@ -1067,10 +1192,15 @@ function updateNavUI(){
   }
   document.getElementById('lsName').textContent=myName();
   document.getElementById('lsHandle').textContent=myHandle();
+  // Admin visibility — only for admin users
+  const navAdmin=document.getElementById('navAdmin');
+  const bnAdmin=document.getElementById('bnAdmin');
   if(isAdmin()){
-    document.getElementById('navAdmin').style.display='flex';
-    const bnAdmin=document.getElementById('bnAdmin');
+    if(navAdmin)navAdmin.style.display='flex';
     if(bnAdmin)bnAdmin.style.display='flex';
+  } else {
+    if(navAdmin)navAdmin.style.display='none';
+    if(bnAdmin)bnAdmin.style.display='none';
   }
 }
 
@@ -1129,7 +1259,7 @@ function dismissNewPosts(){
   loadPosts();
 }
 
-// Toast de notificação em tempo real (como o Twitter)
+// Toast de notificação em tempo real — animação forte
 function showRealtimeNotif(n, fromName){
   const icons={like:'❤️',comment:'💬',follow:'👤',new_post:'📢',admin_granted:'🛡️',verified:'✦'};
   const texts={
@@ -1140,8 +1270,48 @@ function showRealtimeNotif(n, fromName){
     admin_granted:`Você é um Admin agora! 🛡️`,
     verified:`Sua conta foi verificada ✦`
   };
+  const icon=icons[n.type]||'🔔';
   const msg=texts[n.type]||`${fromName} interagiu com você`;
-  toast(`${icons[n.type]||'🔔'} ${msg}`);
+  // Toast grande e destacado
+  showNotifToast(icon, msg);
+  // Vibração no mobile
+  if(navigator.vibrate) navigator.vibrate([100,50,100]);
+  // Shake no ícone do sino
+  const bellBn=document.getElementById('bnNotif');
+  const bellNav=document.getElementById('navNotif');
+  [bellBn,bellNav].forEach(el=>{
+    if(!el)return;
+    el.classList.add('bell-shake');
+    setTimeout(()=>el.classList.remove('bell-shake'),600);
+  });
+}
+
+function showNotifToast(icon, msg){
+  let toast=document.getElementById('notifToast');
+  if(!toast){
+    toast=document.createElement('div');
+    toast.id='notifToast';
+    toast.style.cssText=`
+      position:fixed;top:20px;right:20px;z-index:9999;
+      background:var(--bg2);border:1px solid rgba(245,200,66,.4);
+      border-radius:16px;padding:14px 18px;
+      display:flex;align-items:center;gap:12px;
+      box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 1px rgba(245,200,66,.1);
+      max-width:320px;transform:translateX(120%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+      pointer-events:none;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML=`
+    <div style="font-size:24px;flex-shrink:0;">${icon}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Nova notificação</div>
+      <div style="font-size:13px;color:var(--white);line-height:1.4;">${msg}</div>
+    </div>
+  `;
+  toast.style.transform='translateX(0)';
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>{ toast.style.transform='translateX(120%)'; },4000);
 }
 
 // ── PAGES ──
@@ -1160,10 +1330,64 @@ function setBnActive(btn){
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
-function toggleMobileSearch(){
-  const inp=document.getElementById('searchInput');
-  if(inp)inp.focus();
+function openMobileSearch(){
+  const overlay=document.getElementById('mobileSearchOverlay');
+  if(overlay){overlay.style.display='flex';setTimeout(()=>document.getElementById('mobileSearchInput')?.focus(),100);}
 }
+function closeMobileSearch(){
+  const overlay=document.getElementById('mobileSearchOverlay');
+  if(overlay)overlay.style.display='none';
+  document.getElementById('mobileSearchResults').innerHTML='<div class="empty" style="padding:40px 24px;"><div class="empty-icon">🔍</div>Pesquise por pessoas ou posts</div>';
+  if(document.getElementById('mobileSearchInput'))document.getElementById('mobileSearchInput').value='';
+}
+
+let _mst;
+async function handleMobileSearch(){
+  clearTimeout(_mst);
+  const q=(document.getElementById('mobileSearchInput')?.value||'').trim().toLowerCase();
+  const res=document.getElementById('mobileSearchResults');
+  if(!q){
+    res.innerHTML='<div class="empty" style="padding:40px 24px;"><div class="empty-icon">🔍</div>Pesquise por pessoas ou posts</div>';
+    return;
+  }
+  res.innerHTML='<div class="spinner"></div>';
+  _mst=setTimeout(async()=>{
+    const[{data:users},{data:posts}]=await Promise.all([
+      sb.from('profiles').select('*').ilike('name',`%${q}%`).limit(8),
+      sb.from('posts').select('*').ilike('text',`%${q}%`).order('id',{ascending:false}).limit(6)
+    ]);
+    if(!users?.length&&!posts?.length){
+      res.innerHTML='<div class="empty" style="padding:40px 24px;"><div class="empty-icon">😔</div>Nenhum resultado para "'+esc(q)+'"</div>';
+      return;
+    }
+    let html='';
+    if(users?.length){
+      html+='<div style="padding:10px 16px 4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;">Pessoas</div>';
+      html+=users.map(u=>{
+        const n=u.name||'Usuário';
+        const avC=u.avatar_url?`<img class="av-img" src="${u.avatar_url}">`:(n.slice(0,2).toUpperCase());
+        const avSt=u.avatar_url?'background:var(--bg3);overflow:hidden;':avS(u.id);
+        return`<div class="search-result-item" style="padding:12px 16px;" onclick="closeMobileSearch();openProfile('${u.id}')">
+          <div class="av av-40" style="${avSt}">${avC}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15px;font-weight:700;">${esc(n)} ${u.verified?'<span style="color:var(--gold)">✦</span>':''}</div>
+            <div style="font-size:13px;color:var(--muted);">@${esc(u.handle||n)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    if(posts?.length){
+      html+='<div style="padding:10px 16px 4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;">Posts</div>';
+      html+=posts.map(p=>`<div class="search-result-item" style="padding:12px 16px;" onclick="closeMobileSearch();openComments(${p.id})">
+        <div style="width:40px;text-align:center;font-size:20px;flex-shrink:0;">💬</div>
+        <div style="font-size:14px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc((p.text||'').slice(0,80))}</div>
+      </div>`).join('');
+    }
+    res.innerHTML=html;
+  },280);
+}
+
+function toggleMobileSearch(){openMobileSearch();}
 
 // ── FEED ──
 function switchFeed(mode){
@@ -1181,7 +1405,18 @@ function renderFeed(){
 }
 
 async function loadPosts(){
-  document.getElementById('postsArea').innerHTML='<div class="spinner"></div>';
+  document.getElementById('postsArea').innerHTML=`
+  <div style="padding:20px;">
+    ${[1,2,3].map(()=>`
+    <div style="display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--border);opacity:.4;">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--bg3);flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="height:12px;background:var(--bg3);border-radius:6px;width:40%;margin-bottom:8px;"></div>
+        <div style="height:12px;background:var(--bg3);border-radius:6px;width:90%;margin-bottom:6px;"></div>
+        <div style="height:12px;background:var(--bg3);border-radius:6px;width:70%;"></div>
+      </div>
+    </div>`).join('')}
+  </div>`;
   const{data:posts,error}=await sb.from('posts').select('*').order('is_pinned',{ascending:false}).order('id',{ascending:false});
   if(error){document.getElementById('postsArea').innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div>Erro: ${error.message}</div>`;return;}
   if(!posts?.length){document.getElementById('postsArea').innerHTML='<div class="empty"><div class="empty-icon">✏️</div>Nenhum post ainda. Seja o primeiro!</div>';POSTS=[];return;}
@@ -1213,7 +1448,7 @@ async function enrichAndCache(posts){
   (cr.data||[]).forEach(r=>{cm[r.post_id]=(cm[r.post_id]||0)+1;});
   (pr.data||[]).forEach(r=>{pm[r.id]=r;});
   const ls=new Set((mlr.data||[]).map(r=>r.post_id));
-  POSTS=posts.map(p=>({...p,profiles:pm[p.user_id]||null,_likes:lm[p.id]||0,_comments:cm[p.id]||0,_liked:ls.has(p.id)}));
+  POSTS=posts.map(p=>({...p,profiles:pm[p.user_id]||{id:p.user_id,name:'Usuário',handle:'usuario',verified:false,is_admin:false,avatar_url:null},_likes:lm[p.id]||0,_comments:cm[p.id]||0,_liked:ls.has(p.id)}));
 }
 
 function renderPosts(list,container){
@@ -1255,6 +1490,9 @@ function postHTML(p){
         <button class="act-btn" onclick="openShare(${p.id})">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
+        ${p.user_id!==ME.id?`<button class="act-btn report" onclick="openReport('post',${p.id},'${esc(name)}')" title="Denunciar" style="margin-left:auto;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:15px;height:15px;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        </button>`:''}
       </div>
     </div>
   </div>`;
@@ -1397,10 +1635,17 @@ async function loadComments(){
     const n=prof?.name||'Usuário';
     const avC=prof?.avatar_url?`<img class="av-img" src="${prof.avatar_url}">`:(n.slice(0,2).toUpperCase());
     const avSt=prof?.avatar_url?'background:var(--bg3);overflow:hidden;':avS(cm.user_id);
+    const canDelCm=cm.user_id===ME.id||isAdmin();
     return`<div class="comment-item">
       <div class="av av-34" style="${avSt};cursor:pointer;flex-shrink:0;" onclick="closeModal('commentModal');openProfile('${cm.user_id}')">${avC}</div>
       <div class="comment-body">
-        <div class="comment-author" onclick="closeModal('commentModal');openProfile('${cm.user_id}')">${esc(n)}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div class="comment-author" onclick="closeModal('commentModal');openProfile('${cm.user_id}')">${esc(n)}</div>
+          <div style="display:flex;gap:4px;flex-shrink:0;">
+            ${cm.user_id!==ME.id?`<button onclick="openReport('comment',${cm.id},'${esc(n)}')" title="Denunciar" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;transition:color .15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">🚩</button>`:''}
+            ${canDelCm?`<button onclick="deleteComment(${cm.id})" title="Deletar" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;transition:color .15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">🗑</button>`:''}
+          </div>
+        </div>
         <div class="comment-txt">${esc(cm.text)}</div>
       </div>
     </div>`;
@@ -1604,14 +1849,22 @@ async function markRead(){
 
 async function loadNotifs(){
   document.getElementById('notifList').innerHTML='<div class="spinner"></div>';
-  const{data,error}=await sb.from('notifications')
-    .select('*,profiles!notifications_from_user_id_fkey(name,avatar_url)')
+  // Fetch notifications without join (more reliable across all Supabase configs)
+  const{data:rawNotifs,error}=await sb.from('notifications')
+    .select('*')
     .eq('user_id',ME.id)
     .order('id',{ascending:false})
     .limit(60);
-  if(error||!data?.length){
+  if(error||!rawNotifs?.length){
     document.getElementById('notifList').innerHTML='<div class="empty"><div class="empty-icon">🔔</div>Nenhuma notificação ainda.<br>Interaja com a comunidade!</div>';return;
   }
+  // Fetch sender profiles separately
+  const senderIds=[...new Set(rawNotifs.map(n=>n.from_user_id).filter(Boolean))];
+  const{data:senderProfs}=senderIds.length
+    ? await sb.from('profiles').select('id,name,avatar_url').in('id',senderIds)
+    : {data:[]};
+  const senderMap={};(senderProfs||[]).forEach(p=>{senderMap[p.id]=p;});
+  const data=rawNotifs.map(n=>({...n,_sender:senderMap[n.from_user_id]||null}));
 
   const icons={
     like:'❤️', comment:'💬', follow:'👤',
@@ -1630,21 +1883,55 @@ async function loadNotifs(){
     verified:`Sua conta foi <b>verificada</b> oficialmente ✦`
   })[n.type]||`<b>${esc(name)}</b> interagiu com você`;
 
-  document.getElementById('notifList').innerHTML=data.map(n=>{
-    const prof=n.profiles;
+  const listEl = document.getElementById('notifList');
+  if(!data.length){
+    listEl.innerHTML='<div class="empty"><div class="empty-icon">🔔</div>Nenhuma notificação ainda.</div>';
+    return;
+  }
+
+  // Header com "Apagar todas"
+  const header = `<div style="display:flex;align-items:center;justify-content:space-between;
+    padding:12px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;
+    background:rgba(0,0,0,.9);backdrop-filter:blur(12px);z-index:5;">
+    <span style="font-family:var(--title);font-size:15px;font-weight:800;">Notificações</span>
+    <button onclick="clearAllNotifs()" style="background:none;border:none;color:var(--muted);
+      font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s;"
+      onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">
+      Apagar todas
+    </button>
+  </div>`;
+
+  listEl.innerHTML = header + data.map(n=>{
+    const prof=n._sender;
     const name=prof?.name||'Alguém';
     const avC=prof?.avatar_url?`<img class="av-img" src="${prof.avatar_url}">`:(icons[n.type]||'🔔');
     const avSt=prof?.avatar_url?'background:var(--bg3);overflow:hidden;':'';
     const cls=iconClasses[n.type]||'';
     const onclick=n.post_id?`openComments(${n.post_id})`:`openProfile('${n.from_user_id}')`;
-    return`<div class="notif-card ${n.read?'':'unread'}" onclick="${onclick}">
-      <div class="notif-icon ${cls}" style="${avSt}">${avC}</div>
-      <div class="notif-body">
-        <div class="notif-text">${getTexts(name,n)}</div>
-        <div class="notif-time">${ago(n.created_at)}</div>
+    return`<div class="notif-card ${n.read?'':'unread'}" id="notif-${n.id}" style="position:relative;">
+      <div style="display:flex;align-items:flex-start;gap:14px;flex:1;cursor:pointer;" onclick="${onclick}">
+        <div class="notif-icon ${cls}" style="${avSt}">${avC}</div>
+        <div class="notif-body">
+          <div class="notif-text">${getTexts(name,n)}</div>
+          <div class="notif-time">${ago(n.created_at)}</div>
+        </div>
       </div>
+      <button onclick="deleteNotif(${n.id})" title="Apagar"
+        style="position:absolute;top:12px;right:12px;background:none;border:none;
+        color:var(--muted);font-size:14px;cursor:pointer;padding:4px;border-radius:50%;
+        opacity:0;transition:all .15s;line-height:1;"
+        onmouseover="this.style.color='var(--red)'"
+        onmouseout="this.style.color='var(--muted)'">✕</button>
     </div>`;
   }).join('');
+
+  // Mostrar botão X ao hover no card
+  listEl.querySelectorAll('.notif-card').forEach(card=>{
+    const btn=card.querySelector('button[title="Apagar"]');
+    if(!btn)return;
+    card.addEventListener('mouseenter',()=>btn.style.opacity='1');
+    card.addEventListener('mouseleave',()=>btn.style.opacity='0');
+  });
 }
 
 // ── QUEM SEGUIR ──
@@ -1677,13 +1964,76 @@ async function quickFollow(id,btn){
   toast('Seguindo! ✓');setTimeout(loadWhoToFollow,800);
 }
 
-// ── STATS ──
+// ── STATS + TENDÊNCIAS DINÂMICAS ──
 async function loadStats(){
-  const[{count:pc},{count:uc}]=await Promise.all([
+  await loadTrends();
+}
+
+async function loadTrends(){
+  const container=document.getElementById('trendsWidget');
+  if(!container)return;
+
+  // Fetch real data in parallel
+  const[
+    {count:postCount},
+    {count:userCount},
+    {data:recentPosts}
+  ]=await Promise.all([
     sb.from('posts').select('*',{count:'exact',head:true}),
-    sb.from('profiles').select('*',{count:'exact',head:true})
+    sb.from('profiles').select('*',{count:'exact',head:true}),
+    sb.from('posts').select('text,created_at').order('id',{ascending:false}).limit(100)
   ]);
-  if(pc!=null)document.getElementById('trendCount').textContent=pc+' posts na community';
+
+  // Extract hashtags from recent posts
+  const hashtagMap={};
+  (recentPosts||[]).forEach(p=>{
+    const matches=(p.text||'').match(/#[\w\u00C0-\u017F]+/g)||[];
+    matches.forEach(tag=>{
+      const t=tag.toLowerCase();
+      hashtagMap[t]=(hashtagMap[t]||0)+1;
+    });
+  });
+
+  // Sort hashtags by frequency
+  const topTags=Object.entries(hashtagMap)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,5);
+
+  // Build trends HTML
+  let trendsHTML='';
+
+  // Community stat row
+  trendsHTML+=`<div class="trend-row" onclick="switchFeed('pv');goPage('feed',document.getElementById('navFeed'))">
+    <div class="trend-cat">MindOnline · Community</div>
+    <div class="trend-tag">#ComunicacaoEtica</div>
+    <div class="trend-cnt">${postCount||0} posts · ${userCount||0} membros</div>
+  </div>`;
+
+  // Dynamic hashtag rows
+  if(topTags.length){
+    topTags.forEach(([tag,count])=>{
+      trendsHTML+=`<div class="trend-row">
+        <div class="trend-cat">Em alta</div>
+        <div class="trend-tag">${esc(tag)}</div>
+        <div class="trend-cnt">${count} post${count>1?'s':''}</div>
+      </div>`;
+    });
+  } else {
+    // Fallback static trends
+    [
+      ['Tecnologia','#IA','Em alta'],
+      ['Petrolina, PE','#EREMCC','Local'],
+      ['Bem-estar','#SaudeMental','Em alta'],
+    ].forEach(([cat,tag,label])=>{
+      trendsHTML+=`<div class="trend-row">
+        <div class="trend-cat">${cat}</div>
+        <div class="trend-tag">${tag}</div>
+        <div class="trend-cnt">${label}</div>
+      </div>`;
+    });
+  }
+
+  container.innerHTML=trendsHTML;
 }
 
 // ── PESQUISA ──
@@ -1722,11 +2072,12 @@ document.addEventListener('click',e=>{if(!e.target.closest('.search-input-wrap')
 async function loadAdmin(){
   if(!isAdmin())return;
   document.getElementById('adminContent').innerHTML='<div class="spinner"></div>';
-  const[{data:allPosts},{data:allUsers},{count:lc},{count:cc}]=await Promise.all([
+  const[{data:allPosts},{data:allUsers},{count:lc},{count:cc},{data:allReports}]=await Promise.all([
     sb.from('posts').select('*').order('id',{ascending:false}),
     sb.from('profiles').select('*'),
     sb.from('likes').select('*',{count:'exact',head:true}),
-    sb.from('comments').select('*',{count:'exact',head:true})
+    sb.from('comments').select('*',{count:'exact',head:true}),
+    sb.from('reports').select('*').eq('status','pending').order('id',{ascending:false}).limit(50).catch(()=>({data:[]}))
   ]);
   const uids=[...new Set((allPosts||[]).map(p=>p.user_id))];
   const{data:profs}=await sb.from('profiles').select('id,name,avatar_url').in('id',uids);
@@ -1749,6 +2100,10 @@ async function loadAdmin(){
       <div class="admin-stat-card">
         <div class="admin-stat-n" style="color:var(--green)">${cc||0}</div>
         <div class="admin-stat-l">💬 Comentários</div>
+      </div>
+      <div class="admin-stat-card" style="grid-column:1/-1;cursor:pointer;" onclick="document.getElementById('adminReports').scrollIntoView({behavior:'smooth'})">
+        <div class="admin-stat-n" style="color:var(--red)">${allReports?.length||0}</div>
+        <div class="admin-stat-l">🚩 Denúncias pendentes ${allReports?.length?`<span class="admin-reports-count">${allReports.length}</span>`:''}</div>
       </div>
     </div>
 
@@ -1806,6 +2161,18 @@ async function loadAdmin(){
     </div>`;
 }
 
+async function adminDelReportedPost(postId,reportId){
+  if(!confirm('Deletar o post denunciado?'))return;
+  await sb.from('likes').delete().eq('post_id',postId);
+  await sb.from('comments').delete().eq('post_id',postId);
+  await sb.from('posts').delete().eq('id',postId);
+  await sb.from('reports').update({status:'resolved'}).eq('id',reportId);
+  toast('Post deletado e denúncia resolvida');loadAdmin();loadPosts();
+}
+async function dismissReport(reportId){
+  await sb.from('reports').update({status:'dismissed'}).eq('id',reportId);
+  toast('Denúncia ignorada');loadAdmin();
+}
 async function adminDel(id){
   if(!confirm('Deletar este post?'))return;
   await sb.from('likes').delete().eq('post_id',id);
@@ -1840,7 +2207,100 @@ async function adminMkAdmin(id,a){
   loadAdmin();
 }
 
+function openMobileMenu(){
+  const sheet=document.getElementById('mobileMenuSheet');
+  if(!sheet)return;
+  document.getElementById('menuSheetName').textContent=myName();
+  document.getElementById('menuSheetHandle').textContent=myHandle();
+  sheet.style.display='flex';
+  sheet.style.flexDirection='column';
+  sheet.style.justifyContent='flex-end';
+}
+function closeMobileMenu(){
+  const sheet=document.getElementById('mobileMenuSheet');
+  if(sheet)sheet.style.display='none';
+}
+
 init();
 </script>
+
+<!-- MOBILE SEARCH OVERLAY -->
+<div id="mobileSearchOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:400;flex-direction:column;">
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);">
+    <button onclick="closeMobileSearch()" style="background:none;border:none;color:var(--white);font-size:22px;cursor:pointer;padding:4px;">←</button>
+    <input id="mobileSearchInput" type="text" placeholder="Pesquisar pessoas e posts..."
+      style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:9999px;
+      padding:10px 16px;color:var(--white);font-size:15px;outline:none;font-family:var(--body);"
+      oninput="handleMobileSearch()" autocomplete="off">
+  </div>
+  <div id="mobileSearchResults" style="flex:1;overflow-y:auto;padding:8px 0;">
+    <div class="empty" style="padding:40px 24px;">
+      <div class="empty-icon">🔍</div>
+      Pesquise por pessoas ou posts
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE LOGOUT SHEET -->
+<div id="mobileMenuSheet" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:450;backdrop-filter:blur(4px);" onclick="if(event.target===this)closeMobileMenu()">
+  <div style="position:absolute;bottom:0;left:0;right:0;background:var(--bg2);border-radius:20px 20px 0 0;padding:8px 0 32px;border-top:1px solid var(--border);">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:999px;margin:8px auto 16px;"></div>
+    <div style="padding:0 20px;">
+      <div style="font-family:var(--title);font-size:17px;font-weight:800;margin-bottom:4px;" id="menuSheetName">—</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;" id="menuSheetHandle">—</div>
+    </div>
+    <button onclick="goPage('myprofile',document.getElementById('navProfile'));closeMobileMenu()" 
+      style="width:100%;padding:14px 20px;background:none;border:none;color:var(--white);font-size:15px;font-weight:500;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:var(--body);">
+      <span style="font-size:20px;">👤</span> Ver perfil
+    </button>
+    <button onclick="openModal('editModal');closeMobileMenu()" 
+      style="width:100%;padding:14px 20px;background:none;border:none;color:var(--white);font-size:15px;font-weight:500;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:var(--body);">
+      <span style="font-size:20px;">✏️</span> Editar perfil
+    </button>
+    <div style="height:1px;background:var(--border);margin:8px 20px;"></div>
+    <button onclick="doLogout();closeMobileMenu()" 
+      style="width:100%;padding:14px 20px;background:none;border:none;color:var(--red);font-size:15px;font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:var(--body);">
+      <span style="font-size:20px;">🚪</span> Sair
+    </button>
+    <div style="height:1px;background:var(--border);margin:8px 20px;"></div>
+    <a href="https://mindonline.netlify.app" target="_blank"
+      style="display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);font-size:14px;font-weight:500;text-decoration:none;">
+      <span style="font-size:18px;">🌐</span> mindonline.netlify.app
+    </a>
+    <a href="privacidade.html" target="_blank"
+      style="display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);font-size:14px;font-weight:500;text-decoration:none;">
+      <span style="font-size:18px;">🔒</span> Política de Privacidade
+    </a>
+  </div>
+</div>
+
+<!-- MODAL DENÚNCIA -->
+<div class="modal-overlay" id="reportModal" onclick="if(event.target===this)closeModal('reportModal')">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-hdr">
+      <button class="modal-close" onclick="closeModal('reportModal')">✕</button>
+      <div class="modal-ttl">🚩 Denunciar</div>
+    </div>
+    <div style="padding:20px">
+      <p style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Selecione o motivo da denúncia. Nossa equipe analisará em breve.
+      </p>
+      <div id="reportOptions" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">Detalhes adicionais (opcional)</label>
+        <textarea id="reportDetails" placeholder="Descreva o problema com mais detalhes..."
+          style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);
+          border-radius:10px;padding:10px 12px;color:var(--white);font-family:var(--body);
+          font-size:14px;resize:none;height:80px;outline:none;line-height:1.5;"
+          onfocus="this.style.borderColor='rgba(245,200,66,.4)'"
+          onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+      <button class="btn-primary" onclick="submitReport()" style="background:var(--red);border-radius:10px;">
+        Enviar denúncia
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
