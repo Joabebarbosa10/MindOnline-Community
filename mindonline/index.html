@@ -2072,16 +2072,42 @@ document.addEventListener('click',e=>{if(!e.target.closest('.search-input-wrap')
 async function loadAdmin(){
   if(!isAdmin())return;
   document.getElementById('adminContent').innerHTML='<div class="spinner"></div>';
-  const[{data:allPosts},{data:allUsers},{count:lc},{count:cc},{data:allReports}]=await Promise.all([
+
+  // Fetch principal — nunca falha mesmo se uma query retornar erro
+  const[postsRes, usersRes, likesRes, commentsRes] = await Promise.all([
     sb.from('posts').select('*').order('id',{ascending:false}),
     sb.from('profiles').select('*'),
     sb.from('likes').select('*',{count:'exact',head:true}),
     sb.from('comments').select('*',{count:'exact',head:true}),
-    sb.from('reports').select('*,profiles!reports_reporter_id_fkey(name)').eq('status','pending').order('id',{ascending:false}).limit(50).catch(()=>({data:[]}))
   ]);
+  const allPosts  = postsRes.data   || [];
+  const allUsers  = usersRes.data   || [];
+  const lc        = likesRes.count  || 0;
+  const cc        = commentsRes.count || 0;
+
+  // Reports: em try/catch separado — tabela pode não existir ainda
+  let allReports = [];
+  try {
+    const rRes = await sb.from('reports')
+      .select('*')
+      .eq('status','pending')
+      .order('id',{ascending:false})
+      .limit(50);
+    if(!rRes.error) allReports = rRes.data || [];
+  } catch(e){ /* tabela ainda não criada — ok */ }
   const uids=[...new Set((allPosts||[]).map(p=>p.user_id))];
   const{data:profs}=await sb.from('profiles').select('id,name,avatar_url').in('id',uids);
   const pm={};(profs||[]).forEach(p=>{pm[p.id]=p;});
+
+  // Enrich reports com nome do reporter (sem depender de FK join)
+  if(allReports.length){
+    const rIds=[...new Set(allReports.map(r=>r.reporter_id).filter(Boolean))];
+    if(rIds.length){
+      const{data:rProfs}=await sb.from('profiles').select('id,name').in('id',rIds);
+      const rMap={};(rProfs||[]).forEach(p=>{rMap[p.id]=p.name;});
+      allReports.forEach(r=>{ r._reporterName=rMap[r.reporter_id]||'Anônimo'; });
+    }
+  }
 
   document.getElementById('adminContent').innerHTML=`
     <div class="admin-stats-grid">
@@ -2138,7 +2164,7 @@ async function loadAdmin(){
       <div class="admin-card-title" style="color:var(--red)">🚩 Denúncias pendentes</div>
       <div id="adminReportsList">
         ${allReports?.length ? allReports.map(r=>{
-          const rname=r.profiles?.name||'Anônimo';
+          const rname=r._reporterName||'Anônimo';
           const reasons={spam:'Spam',hate:'Discurso de ódio',violence:'Violência',harassment:'Assédio',misinf:'Fake news',other:'Outro'};
           return`<div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
             <div style="flex:1;min-width:0;">
