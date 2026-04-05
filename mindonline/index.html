@@ -798,10 +798,10 @@ input,textarea{font-family:var(--body);}
 
     <div class="widget">
       <div class="widget-head">🔥 Tendências</div>
-      <div class="trend-row"><div class="trend-cat">MindOnline</div><div class="trend-tag">#ComunicacaoEtica</div><div class="trend-cnt" id="trendCount">carregando...</div></div>
-      <div class="trend-row"><div class="trend-cat">Tecnologia</div><div class="trend-tag">#IA</div><div class="trend-cnt">18 mil posts</div></div>
-      <div class="trend-row"><div class="trend-cat">Petrolina, PE</div><div class="trend-tag">#EREMCC</div><div class="trend-cnt">412 posts</div></div>
-      <div class="trend-row"><div class="trend-cat">Bem-estar</div><div class="trend-tag">#SaudeMental</div><div class="trend-cnt">9.1 mil posts</div></div>
+      <div class="trend-row"><div class="trend-tag">#ComunicacaoEtica</div></div>
+      <div class="trend-row"><div class="trend-tag">#IA</div></div>
+      <div class="trend-row"><div class="trend-tag">#EREMCC</div></div>
+      <div class="trend-row"><div class="trend-tag">#SaudeMental</div></div>
     </div>
 
     <div class="widget">
@@ -2004,18 +2004,18 @@ async function loadTrends(){
 
   // Community stat row
   trendsHTML+=`<div class="trend-row" onclick="switchFeed('pv');goPage('feed',document.getElementById('navFeed'))">
-    <div class="trend-cat">MindOnline · Community</div>
+    
     <div class="trend-tag">#ComunicacaoEtica</div>
-    <div class="trend-cnt">${postCount||0} posts · ${userCount||0} membros</div>
+    
   </div>`;
 
   // Dynamic hashtag rows
   if(topTags.length){
     topTags.forEach(([tag,count])=>{
       trendsHTML+=`<div class="trend-row">
-        <div class="trend-cat">Em alta</div>
+        
         <div class="trend-tag">${esc(tag)}</div>
-        <div class="trend-cnt">${count} post${count>1?'s':''}</div>
+        
       </div>`;
     });
   } else {
@@ -2026,9 +2026,9 @@ async function loadTrends(){
       ['Bem-estar','#SaudeMental','Em alta'],
     ].forEach(([cat,tag,label])=>{
       trendsHTML+=`<div class="trend-row">
-        <div class="trend-cat">${cat}</div>
+        
         <div class="trend-tag">${tag}</div>
-        <div class="trend-cnt">${label}</div>
+        
       </div>`;
     });
   }
@@ -2077,7 +2077,7 @@ async function loadAdmin(){
     sb.from('profiles').select('*'),
     sb.from('likes').select('*',{count:'exact',head:true}),
     sb.from('comments').select('*',{count:'exact',head:true}),
-    sb.from('reports').select('*').eq('status','pending').order('id',{ascending:false}).limit(50).catch(()=>({data:[]}))
+    sb.from('reports').select('*,profiles!reports_reporter_id_fkey(name)').eq('status','pending').order('id',{ascending:false}).limit(50).catch(()=>({data:[]}))
   ]);
   const uids=[...new Set((allPosts||[]).map(p=>p.user_id))];
   const{data:profs}=await sb.from('profiles').select('id,name,avatar_url').in('id',uids);
@@ -2134,6 +2134,27 @@ async function loadAdmin(){
       </table></div>
     </div>
 
+    <div class="admin-card" id="adminReports">
+      <div class="admin-card-title" style="color:var(--red)">🚩 Denúncias pendentes</div>
+      <div id="adminReportsList">
+        ${allReports?.length ? allReports.map(r=>{
+          const rname=r.profiles?.name||'Anônimo';
+          const reasons={spam:'Spam',hate:'Discurso de ódio',violence:'Violência',harassment:'Assédio',misinf:'Fake news',other:'Outro'};
+          return`<div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:700;color:var(--red);">${reasons[r.reason]||r.reason}</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">Por: <b>${esc(rname)}</b> · Tipo: ${r.ref_type||'?'} · ${ago(r.created_at)}</div>
+              ${r.detail?`<div style="font-size:13px;color:#aaa;margin-top:4px;">"${esc(r.detail)}"</div>`:''}
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+              ${r.ref_type==='post'?`<button class="btn-danger" onclick="adminDelReportedPost('${r.ref_id}',${r.id})">Deletar post</button>`:''}
+              <button class="btn-sm" onclick="dismissReport(${r.id})">Ignorar</button>
+            </div>
+          </div>`;
+        }).join('') : '<div style="padding:20px;text-align:center;color:var(--muted);font-size:14px;">✅ Nenhuma denúncia pendente</div>'}
+      </div>
+    </div>
+
     <div class="admin-card">
       <div class="admin-card-title">👥 Usuários cadastrados</div>
       <div class="tbl-overflow"><table class="tbl">
@@ -2159,6 +2180,59 @@ async function loadAdmin(){
         }).join('')}</tbody>
       </table></div>
     </div>`;
+}
+
+
+// ══ DENÚNCIAS ══
+let REPORT_TYPE=null, REPORT_REF_ID=null, SELECTED_REASON=null;
+
+const REPORT_REASONS=[
+  {key:'spam',       label:'Spam ou conteúdo enganoso'},
+  {key:'hate',       label:'Discurso de ódio ou discriminação'},
+  {key:'violence',   label:'Violência ou conteúdo perturbador'},
+  {key:'harassment', label:'Assédio ou bullying'},
+  {key:'misinf',     label:'Desinformação ou fake news'},
+  {key:'other',      label:'Outro motivo'},
+];
+
+function openReport(type, refId, targetName){
+  REPORT_TYPE=type; REPORT_REF_ID=refId; SELECTED_REASON=null;
+  const opts=document.getElementById('reportOptions');
+  if(opts){
+    opts.innerHTML=REPORT_REASONS.map(r=>`
+      <button onclick="selectReason('${r.key}',this)"
+        style="width:100%;text-align:left;padding:10px 14px;border:1px solid var(--border);
+        border-radius:10px;background:rgba(255,255,255,.03);color:var(--white);
+        font-size:14px;cursor:pointer;transition:all .2s;font-family:var(--body);margin-bottom:4px;"
+        class="rep-btn">${r.label}</button>
+    `).join('');
+  }
+  const det=document.getElementById('reportDetails');
+  if(det)det.value='';
+  openModal('reportModal');
+}
+
+function selectReason(key, btn){
+  SELECTED_REASON=key;
+  document.querySelectorAll('.rep-btn').forEach(b=>{
+    b.style.borderColor='var(--border)';
+    b.style.background='rgba(255,255,255,.03)';
+  });
+  btn.style.borderColor='rgba(244,33,46,.5)';
+  btn.style.background='rgba(244,33,46,.08)';
+}
+
+async function submitReport(){
+  if(!SELECTED_REASON)return toast('Selecione um motivo para a denúncia');
+  const detail=document.getElementById('reportDetails')?.value.trim()||'';
+  const{error}=await sb.from('reports').insert({
+    reporter_id:ME.id, ref_type:REPORT_TYPE,
+    ref_id:String(REPORT_REF_ID), reason:SELECTED_REASON,
+    detail, status:'pending'
+  });
+  if(error)return toast('Erro: '+error.message);
+  closeModal('reportModal');
+  toast('Denúncia enviada! Nossa equipe analisará em breve 🚩');
 }
 
 async function adminDelReportedPost(postId,reportId){
