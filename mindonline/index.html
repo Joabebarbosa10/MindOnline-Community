@@ -1011,7 +1011,12 @@ input,textarea{font-family:var(--body);}
 <script>
 const SB_URL="https://etroveencnwkplyntjik.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0cm92ZWVuY253a3BseW50amlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTE1NzIsImV4cCI6MjA5MDM2NzU3Mn0.b-mFND_1ONKe2dXWFfQ8JsilmEDneD1TAFovQ9Xgm3o";
-const sb=window.supabase.createClient(SB_URL,SB_KEY);
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{
+  auth:{
+    detectSessionInUrl:true,
+    flowType:'pkce'
+  }
+});
 
 let ME=null,MY_PROFILE=null,POSTS=[],FEED_MODE='pv',ACTIVE_POST=null,SHARE_POST=null,SEL_FILE=null,SEL_FILE_MODAL=null;
 let AVATAR_FILE=null, AVATAR_PREVIEW_URL=null;
