@@ -968,6 +968,7 @@ input,textarea{font-family:var(--body);}
       <div class="field"><label>Bio</label><textarea id="editBio" style="resize:vertical;min-height:80px" placeholder="Fale sobre você..."></textarea></div>
       <button class="btn-primary" onclick="saveProfile()">Salvar alterações</button>
       <button onclick="openModal('changePwModal')" style="width:100%;margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--border);font-family:var(--body);font-size:14px;font-weight:600;padding:11px;cursor:pointer;border-radius:9999px;">🔑 Trocar senha</button>
+      <button onclick="deleteMyAccount()" style="width:100%;margin-top:10px;background:transparent;color:var(--red);border:1px solid rgba(244,33,46,.3);font-family:var(--body);font-size:14px;font-weight:600;padding:11px;cursor:pointer;border-radius:9999px;transition:all .2s;" onmouseover="this.style.background='rgba(244,33,46,.08)'" onmouseout="this.style.background='transparent'">🗑 Excluir minha conta</button>
     </div>
   </div>
 </div>
@@ -1052,21 +1053,36 @@ function openComposeModal(){
 // ── INIT ──
 async function init(){
   const hash=window.location.hash;
-  if(hash.includes('type=recovery')||window.location.search.includes('reset=1')){
+  const search=window.location.search;
+
+  // Limpar hash/token da URL sem recarregar
+  if(hash.includes('access_token')||hash.includes('type=')){
+    history.replaceState(null,'',window.location.pathname+search);
+  }
+
+  if(hash.includes('type=recovery')||search.includes('reset=1')){
+    // Aguardar o Supabase processar o token de recuperação
+    await new Promise(r=>setTimeout(r,500));
     const{data:{user}}=await sb.auth.getUser();
     if(user){ME=user;await fetchProfile();startApp();openModal('changePwModal');return;}
   }
+
+  // Verificar sessão existente
   const{data:{session}}=await sb.auth.getSession();
   if(session?.user){ME=session.user;await fetchProfile();startApp();return;}
+
   const{data:{user}}=await sb.auth.getUser();
   if(user){ME=user;await fetchProfile();showContinue();}
+
+  // Listener para OAuth (Google) e refresh de token
   sb.auth.onAuthStateChange(async(event,session)=>{
-    if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session?.user&&!ME){
-      ME=session.user;await fetchProfile();
+    if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session?.user){
+      if(ME&&ME.id===session.user.id)return; // já logado
+      ME=session.user;
+      await fetchProfile();
       if(!MY_PROFILE){
         const name=ME.user_metadata?.full_name||ME.email.split('@')[0];
         const handle=name.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/^_+|_+$/g,'').slice(0,20)||'usuario';
-        // Grab Google profile picture automatically
         const avatar_url=ME.user_metadata?.avatar_url||ME.user_metadata?.picture||null;
         await sb.from('profiles').upsert({id:ME.id,name,handle,avatar_url});
         await fetchProfile();
@@ -1652,6 +1668,34 @@ async function loadComments(){
   }).join('');
 }
 
+async function deleteComment(commentId){
+  if(!confirm('Deletar este comentário?'))return;
+  const{error}=await sb.from('comments').delete().eq('id',commentId);
+  if(error)return toast('Erro ao deletar comentário');
+  toast('Comentário deletado');
+  if(ACTIVE_POST){
+    ACTIVE_POST._comments=Math.max(0,(ACTIVE_POST._comments||1)-1);
+    const el=document.getElementById(`cc-${ACTIVE_POST.id}`);
+    if(el)el.textContent=ACTIVE_POST._comments||'';
+  }
+  await loadComments();
+}
+
+async function deleteNotif(notifId){
+  await sb.from('notifications').delete().eq('id',notifId);
+  const card=document.getElementById(`notif-${notifId}`);
+  if(card)card.remove();
+  loadUnread();
+}
+
+async function clearAllNotifs(){
+  if(!confirm('Apagar todas as notificações?'))return;
+  await sb.from('notifications').delete().eq('user_id',ME.id);
+  document.getElementById('notifList').innerHTML='<div class="empty"><div class="empty-icon">🔔</div>Nenhuma notificação ainda.<br>Interaja com a comunidade!</div>';
+  loadUnread();
+  toast('Notificações apagadas');
+}
+
 async function submitComment(){
   const txt=document.getElementById('commentInput').value.trim();
   if(!txt||!ACTIVE_POST)return;
@@ -1778,7 +1822,46 @@ async function saveProfile(){
   updateNavUI();closeModal('editModal');toast('Perfil atualizado ✓');openProfile(ME.id);
 }
 
-// ── SEGUIR ──
+async function deleteMyAccount(){
+  if(!confirm('Tem certeza? Esta ação é IRREVERSÍVEL. Todos os seus posts, comentários e curtidas serão apagados.'))return;
+  if(!confirm('Confirma a exclusão permanente da sua conta?'))return;
+  toast('Excluindo conta...');
+  try{
+    // Deletar dados do usuário
+    await sb.from('likes').delete().eq('user_id',ME.id);
+    await sb.from('comments').delete().eq('user_id',ME.id);
+    await sb.from('notifications').delete().eq('user_id',ME.id);
+    await sb.from('notifications').delete().eq('from_user_id',ME.id);
+    await sb.from('follows').delete().eq('follower_id',ME.id);
+    await sb.from('follows').delete().eq('following_id',ME.id);
+    await sb.from('posts').delete().eq('user_id',ME.id);
+    await sb.from('profiles').delete().eq('id',ME.id);
+    await sb.auth.signOut();
+    ME=null;MY_PROFILE=null;POSTS=[];
+    document.getElementById('appWrap').style.display='none';
+    document.getElementById('authPage').style.display='flex';
+    document.getElementById('continueSection').style.display='none';
+    toast('Conta excluída com sucesso.');
+  }catch(e){
+    toast('Erro ao excluir conta: '+e.message);
+  }
+}
+
+async function adminDeleteUser(userId){
+  if(userId===ME.id)return toast('Não é possível excluir a própria conta aqui');
+  if(!confirm('Excluir este usuário e todos os seus dados?'))return;
+  await sb.from('likes').delete().eq('user_id',userId);
+  await sb.from('comments').delete().eq('user_id',userId);
+  await sb.from('notifications').delete().eq('user_id',userId);
+  await sb.from('notifications').delete().eq('from_user_id',userId);
+  await sb.from('follows').delete().eq('follower_id',userId);
+  await sb.from('follows').delete().eq('following_id',userId);
+  await sb.from('posts').delete().eq('user_id',userId);
+  await sb.from('profiles').delete().eq('id',userId);
+  toast('Usuário excluído');loadAdmin();
+}
+
+
 async function toggleFollow(targetId,btn){
   const f=btn.classList.contains('following');
   if(f){
@@ -2200,7 +2283,7 @@ async function loadAdmin(){
             <td>${u.verified?'<span style="color:var(--gold)">✦</span>':'-'}</td>
             <td>
               <button class="btn-sm" onclick="adminVerify('${u.id}',${u.verified})">${u.verified?'Remover ✦':'Verificar ✦'}</button>
-              ${u.id!==ME.id?`<button class="btn-sm" onclick="adminMkAdmin('${u.id}',${u.is_admin})">${u.is_admin?'Rem. Admin':'+ Admin'}</button>`:'<span style="font-size:11px;color:var(--muted)">Você</span>'}
+              ${u.id!==ME.id?`<button class="btn-sm" onclick="adminMkAdmin('${u.id}',${u.is_admin})">${u.is_admin?'Rem. Admin':'+ Admin'}</button><button class="btn-danger" onclick="adminDeleteUser('${u.id}')">Excluir</button>`:'<span style="font-size:11px;color:var(--muted)">Você</span>'}
             </td>
           </tr>`;
         }).join('')}</tbody>
@@ -2361,6 +2444,10 @@ init();
     <button onclick="doLogout();closeMobileMenu()" 
       style="width:100%;padding:14px 20px;background:none;border:none;color:var(--red);font-size:15px;font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:var(--body);">
       <span style="font-size:20px;">🚪</span> Sair
+    </button>
+    <button onclick="closeMobileMenu();openEditModal();setTimeout(()=>document.querySelector('[onclick*=deleteMyAccount]')?.scrollIntoView({behavior:'smooth'}),300)" 
+      style="width:100%;padding:14px 20px;background:none;border:none;color:var(--muted);font-size:14px;font-weight:500;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;font-family:var(--body);">
+      <span style="font-size:18px;">🗑</span> Excluir conta
     </button>
     <div style="height:1px;background:var(--border);margin:8px 20px;"></div>
     <a href="https://mindonline.netlify.app" target="_blank"
