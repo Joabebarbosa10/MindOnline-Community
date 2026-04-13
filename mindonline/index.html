@@ -434,8 +434,11 @@ input,textarea{font-family:var(--body);}
 
 /* ══ PROFILE ══ */
 .profile-banner{
-  height:180px;background:linear-gradient(135deg,rgba(245,200,66,.18),rgba(79,142,247,.12),rgba(244,33,46,.08));
-  position:relative;overflow:hidden;cursor:default;
+  height:180px;
+  background:linear-gradient(135deg,rgba(245,200,66,.18),rgba(79,142,247,.12),rgba(244,33,46,.08));
+  position:relative;
+  overflow:hidden;
+  cursor:default;
 }
 .profile-banner img{width:100%;height:100%;object-fit:cover;display:block;}
 .profile-banner-overlay{
@@ -447,7 +450,8 @@ input,textarea{font-family:var(--body);}
 .profile-banner:hover .profile-banner-overlay{opacity:1;}
 .profile-banner.editable{cursor:pointer;}
 .profile-header{padding:0 20px 16px;border-bottom:1px solid var(--border);}
-.profile-actions{display:flex;justify-content:space-between;align-items:flex-end;padding:12px 0;}
+.profile-actions{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0 8px;}
+.profile-avatar-wrap{margin-top:-40px;position:relative;z-index:2;}
 .btn-edit-profile{background:transparent;color:var(--white);border:1px solid var(--border);font-size:14px;font-weight:700;padding:7px 18px;border-radius:9999px;cursor:pointer;transition:all .2s;}
 .btn-edit-profile:hover{background:rgba(255,255,255,.06);}
 .btn-follow-profile{background:var(--white);color:#000;border:none;font-size:14px;font-weight:700;padding:7px 18px;border-radius:9999px;cursor:pointer;transition:all .2s;}
@@ -1711,52 +1715,6 @@ async function loadComments(){
   }).join('');
 }
 
-// ── BANNER UPLOAD ──
-async function uploadBanner(input){
-  const file=input.files[0];if(!file)return;
-  toast('Enviando capa...');
-  const ext=file.name.split('.').pop();
-  const fname=`banner-${ME.id}-${Date.now()}.${ext}`;
-  const{error:upErr}=await sb.storage.from('images').upload(fname,file,{upsert:true});
-  if(upErr)return toast('Erro ao enviar: '+upErr.message);
-  const banner_url=sb.storage.from('images').getPublicUrl(fname).data.publicUrl;
-  const{error}=await sb.from('profiles').update({banner_url}).eq('id',ME.id);
-  if(error)return toast('Erro ao salvar: '+error.message);
-  MY_PROFILE={...MY_PROFILE,banner_url};
-  // Atualizar banner na tela sem recarregar tudo
-  const bannerEl=document.getElementById('profileBanner');
-  if(bannerEl){
-    let img=bannerEl.querySelector('img');
-    if(!img){img=document.createElement('img');bannerEl.insertBefore(img,bannerEl.firstChild);}
-    img.src=banner_url;
-  }
-  toast('Capa atualizada ✓');
-}
-
-// ── COOKIES ──
-function checkCookies(){
-  // Mostrar uma vez por sessão de login (não por visita)
-  const key='mindcookie_'+( ME?.id||'guest');
-  if(!sessionStorage.getItem(key)){
-    setTimeout(()=>document.getElementById('cookieBanner').classList.add('show'),800);
-  }
-}
-function cookieAccept(){
-  const key='mindcookie_'+(ME?.id||'guest');
-  sessionStorage.setItem(key,'1');
-  const b=document.getElementById('cookieBanner');
-  b.style.animation='slideUpCookie .3s reverse';
-  setTimeout(()=>{b.classList.remove('show');b.style.animation='';},280);
-  toast('Preferências salvas 🍪');
-}
-function cookieDecline(){
-  const key='mindcookie_'+(ME?.id||'guest');
-  sessionStorage.setItem(key,'1');
-  const b=document.getElementById('cookieBanner');
-  b.style.animation='slideUpCookie .3s reverse';
-  setTimeout(()=>{b.classList.remove('show');b.style.animation='';},280);
-}
-
 async function deleteComment(commentId){
   if(!confirm('Deletar este comentário?'))return;
   const{error}=await sb.from('comments').delete().eq('id',commentId);
@@ -1841,14 +1799,17 @@ async function openProfile(userId){
         <div class="page-subtitle">${posts?.length||0} posts</div>
       </div>
     </div>
-    <div class="profile-banner ${isMe?'editable':''}" id="profileBanner" ${isMe?`onclick="document.getElementById('bannerFileInput').click()"`:''}
-      style="${profile?.banner_url?'':''}">
+    <div class="profile-banner ${isMe?'editable':''}" id="profileBanner"
+      ${isMe?`onclick="document.getElementById('bannerFileInput').click()"`:''}>
       ${profile?.banner_url?`<img src="${profile.banner_url}" alt="banner">`:''}
-      ${isMe?`<div class="profile-banner-overlay">📷 Alterar capa</div><input type="file" id="bannerFileInput" accept="image/*" style="display:none" onchange="uploadBanner(this)">`:''}</div>
-    <div class="profile-header">
+      ${isMe?`<div class="profile-banner-overlay">📷 Alterar capa</div>
+      <input type="file" id="bannerFileInput" accept="image/*" style="display:none" onchange="uploadBanner(this)">`:''} 
+    </div>
     <div class="profile-header">
       <div class="profile-actions">
-        <div class="av av-72" style="${avSt};margin-top:-40px;">${avC}</div>
+        <div class="profile-avatar-wrap">
+          <div class="av av-72" style="${avSt}">${avC}</div>
+        </div>
         ${isMe
           ?`<button class="btn-edit-profile" onclick="openEditModal()">Editar perfil</button>`
           :`<button class="btn-follow-profile ${amF?'following':''}" id="fp-${userId}" onclick="toggleFollow('${userId}',this)">${amF?'Seguindo':'Seguir'}</button>`
@@ -1913,6 +1874,53 @@ async function saveProfile(){
   MY_PROFILE={...MY_PROFILE,name,handle,bio,avatar_url};
   AVATAR_FILE=null;
   updateNavUI();closeModal('editModal');toast('Perfil atualizado ✓');openProfile(ME.id);
+}
+
+// ── BANNER UPLOAD ──
+async function uploadBanner(input){
+  const file=input.files[0];if(!file)return;
+  toast('Enviando capa...');
+  const ext=file.name.split('.').pop();
+  const fname=`banner-${ME.id}-${Date.now()}.${ext}`;
+  const{error:upErr}=await sb.storage.from('images').upload(fname,file,{upsert:true});
+  if(upErr)return toast('Erro ao enviar: '+upErr.message);
+  const banner_url=sb.storage.from('images').getPublicUrl(fname).data.publicUrl;
+  const{error}=await sb.from('profiles').update({banner_url}).eq('id',ME.id);
+  if(error)return toast('Erro ao salvar: '+error.message);
+  MY_PROFILE={...MY_PROFILE,banner_url};
+  const bannerEl=document.getElementById('profileBanner');
+  if(bannerEl){
+    let img=bannerEl.querySelector('img');
+    if(!img){img=document.createElement('img');bannerEl.insertBefore(img,bannerEl.firstChild);}
+    img.src=banner_url;
+  }
+  toast('Capa atualizada ✓');
+}
+
+// ── COOKIES ──
+function checkCookies(){
+  const key='mindcookie_'+(ME?.id||'guest');
+  if(!sessionStorage.getItem(key)){
+    setTimeout(()=>{const b=document.getElementById('cookieBanner');if(b)b.classList.add('show');},900);
+  }
+}
+function cookieAccept(){
+  const key='mindcookie_'+(ME?.id||'guest');
+  sessionStorage.setItem(key,'1');
+  _hideCookieBanner();
+  toast('Preferências salvas 🍪');
+}
+function cookieDecline(){
+  const key='mindcookie_'+(ME?.id||'guest');
+  sessionStorage.setItem(key,'1');
+  _hideCookieBanner();
+}
+function _hideCookieBanner(){
+  const b=document.getElementById('cookieBanner');
+  if(!b)return;
+  b.style.transition='transform .3s ease-in';
+  b.style.transform='translateY(100%)';
+  setTimeout(()=>{b.classList.remove('show');b.style.transform='';b.style.transition='';},300);
 }
 
 async function deleteMyAccount(){
