@@ -433,7 +433,19 @@ input,textarea{font-family:var(--body);}
 .search-result-item:hover{background:rgba(255,255,255,.04);}
 
 /* ══ PROFILE ══ */
-.profile-banner{height:180px;background:linear-gradient(135deg,rgba(245,200,66,.18),rgba(79,142,247,.12),rgba(244,33,46,.08));}
+.profile-banner{
+  height:180px;background:linear-gradient(135deg,rgba(245,200,66,.18),rgba(79,142,247,.12),rgba(244,33,46,.08));
+  position:relative;overflow:hidden;cursor:default;
+}
+.profile-banner img{width:100%;height:100%;object-fit:cover;display:block;}
+.profile-banner-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.45);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .2s;font-size:14px;font-weight:700;
+  color:#fff;gap:8px;cursor:pointer;
+}
+.profile-banner:hover .profile-banner-overlay{opacity:1;}
+.profile-banner.editable{cursor:pointer;}
 .profile-header{padding:0 20px 16px;border-bottom:1px solid var(--border);}
 .profile-actions{display:flex;justify-content:space-between;align-items:flex-end;padding:12px 0;}
 .btn-edit-profile{background:transparent;color:var(--white);border:1px solid var(--border);font-size:14px;font-weight:700;padding:7px 18px;border-radius:9999px;cursor:pointer;transition:all .2s;}
@@ -591,6 +603,32 @@ input,textarea{font-family:var(--body);}
   background: var(--red); color: #fff;
   font-size: 10px; font-weight: 800; padding: 1px 6px;
   border-radius: 999px; margin-left: 6px;
+}
+
+/* ══ COOKIE BANNER ══ */
+#cookieBanner{
+  position:fixed;bottom:0;left:0;right:0;z-index:9000;
+  background:var(--bg2);border-top:1px solid rgba(245,200,66,.25);
+  padding:20px 24px;display:none;
+  box-shadow:0 -8px 40px rgba(0,0,0,.7);
+  animation:slideUpCookie .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUpCookie{from{transform:translateY(100%);}to{transform:translateY(0);}}
+#cookieBanner.show{display:block;}
+.cookie-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.cookie-text{flex:1;min-width:240px;}
+.cookie-title{font-family:var(--title);font-size:15px;font-weight:800;color:var(--white);margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.cookie-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+.cookie-desc a{color:var(--gold);text-decoration:underline;cursor:pointer;}
+.cookie-btns{display:flex;gap:10px;flex-shrink:0;}
+.cookie-accept{background:var(--gold);color:#000;border:none;border-radius:9999px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--body);}
+.cookie-accept:hover{background:var(--gold2);transform:translateY(-1px);}
+.cookie-decline{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:9999px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--body);}
+.cookie-decline:hover{color:var(--white);border-color:rgba(255,255,255,.2);}
+@media(max-width:600px){
+  #cookieBanner{padding:16px 16px 80px;}
+  .cookie-btns{width:100%;}
+  .cookie-accept,.cookie-decline{flex:1;text-align:center;}
 }
 
 </style>
@@ -1230,7 +1268,7 @@ function startApp(){
   document.getElementById('authPage').style.display='none';
   document.getElementById('appWrap').style.display='grid';
   updateNavUI();loadPosts();loadStats();loadWhoToFollow();loadUnread();
-  setupRealtime();
+  setupRealtime();checkCookies();
 }
 
 // ══════════════════════════════════════
@@ -1673,6 +1711,52 @@ async function loadComments(){
   }).join('');
 }
 
+// ── BANNER UPLOAD ──
+async function uploadBanner(input){
+  const file=input.files[0];if(!file)return;
+  toast('Enviando capa...');
+  const ext=file.name.split('.').pop();
+  const fname=`banner-${ME.id}-${Date.now()}.${ext}`;
+  const{error:upErr}=await sb.storage.from('images').upload(fname,file,{upsert:true});
+  if(upErr)return toast('Erro ao enviar: '+upErr.message);
+  const banner_url=sb.storage.from('images').getPublicUrl(fname).data.publicUrl;
+  const{error}=await sb.from('profiles').update({banner_url}).eq('id',ME.id);
+  if(error)return toast('Erro ao salvar: '+error.message);
+  MY_PROFILE={...MY_PROFILE,banner_url};
+  // Atualizar banner na tela sem recarregar tudo
+  const bannerEl=document.getElementById('profileBanner');
+  if(bannerEl){
+    let img=bannerEl.querySelector('img');
+    if(!img){img=document.createElement('img');bannerEl.insertBefore(img,bannerEl.firstChild);}
+    img.src=banner_url;
+  }
+  toast('Capa atualizada ✓');
+}
+
+// ── COOKIES ──
+function checkCookies(){
+  // Mostrar uma vez por sessão de login (não por visita)
+  const key='mindcookie_'+( ME?.id||'guest');
+  if(!sessionStorage.getItem(key)){
+    setTimeout(()=>document.getElementById('cookieBanner').classList.add('show'),800);
+  }
+}
+function cookieAccept(){
+  const key='mindcookie_'+(ME?.id||'guest');
+  sessionStorage.setItem(key,'1');
+  const b=document.getElementById('cookieBanner');
+  b.style.animation='slideUpCookie .3s reverse';
+  setTimeout(()=>{b.classList.remove('show');b.style.animation='';},280);
+  toast('Preferências salvas 🍪');
+}
+function cookieDecline(){
+  const key='mindcookie_'+(ME?.id||'guest');
+  sessionStorage.setItem(key,'1');
+  const b=document.getElementById('cookieBanner');
+  b.style.animation='slideUpCookie .3s reverse';
+  setTimeout(()=>{b.classList.remove('show');b.style.animation='';},280);
+}
+
 async function deleteComment(commentId){
   if(!confirm('Deletar este comentário?'))return;
   const{error}=await sb.from('comments').delete().eq('id',commentId);
@@ -1757,7 +1841,11 @@ async function openProfile(userId){
         <div class="page-subtitle">${posts?.length||0} posts</div>
       </div>
     </div>
-    <div class="profile-banner"></div>
+    <div class="profile-banner ${isMe?'editable':''}" id="profileBanner" ${isMe?`onclick="document.getElementById('bannerFileInput').click()"`:''}
+      style="${profile?.banner_url?'':''}">
+      ${profile?.banner_url?`<img src="${profile.banner_url}" alt="banner">`:''}
+      ${isMe?`<div class="profile-banner-overlay">📷 Alterar capa</div><input type="file" id="bannerFileInput" accept="image/*" style="display:none" onchange="uploadBanner(this)">`:''}</div>
+    <div class="profile-header">
     <div class="profile-header">
       <div class="profile-actions">
         <div class="av av-72" style="${avSt};margin-top:-40px;">${avC}</div>
@@ -2490,6 +2578,23 @@ init();
       <button class="btn-primary" onclick="submitReport()" style="background:var(--red);border-radius:10px;">
         Enviar denúncia
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- COOKIE BANNER -->
+<div id="cookieBanner">
+  <div class="cookie-inner">
+    <div class="cookie-text">
+      <div class="cookie-title"><span>🍪</span> Cookies e Privacidade</div>
+      <div class="cookie-desc">
+        Este site usa cookies para melhorar sua experiência. Ao continuar, você concorda com nossa
+        <a onclick="window.open('privacidade.html','_blank')">Política de Privacidade</a>.
+      </div>
+    </div>
+    <div class="cookie-btns">
+      <button class="cookie-decline" onclick="cookieDecline()">Recusar</button>
+      <button class="cookie-accept" onclick="cookieAccept()">Aceitar</button>
     </div>
   </div>
 </div>
